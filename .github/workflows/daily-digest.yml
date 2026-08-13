@@ -1,0 +1,31 @@
+name: daily-digest
+
+on:
+  schedule:
+    - cron: "0 23 * * *" # 매일 08:00 KST (UTC 23:00 전날)
+  workflow_dispatch: {} # 수동 실행 버튼
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python main.py
+        env:
+          GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          NEWS_KEYWORD: "AI"
+          DB_PATH: "./data/pipeline.db"
+      # SQLite 파일을 리포지토리/아티팩트로 보존하고 싶다면 아래처럼 커밋하거나
+      # actions/upload-artifact로 업로드한다. 없으면 매 실행마다 빈 DB로 시작한다.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-db
+          path: data/pipeline.db
