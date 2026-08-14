@@ -8,6 +8,23 @@ on:
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
+    # 파이프라인이 PostgreSQL을 쓰므로 서비스 컨테이너로 띄운다. 스키마는 앱의 init_db()가
+    # 만든다. 이 DB는 잡이 끝나면 사라지는 일회용이므로, 이력을 유지하려면 외부(관리형) DB의
+    # DATABASE_URL을 Secrets로 넣고 아래 services 블록을 제거할 것.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: briefyi
+          POSTGRES_USER: briefyi
+          POSTGRES_PASSWORD: briefyi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U briefyi -d briefyi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,10 +39,4 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           NEWS_KEYWORD: "AI"
-          DB_PATH: "./data/pipeline.db"
-      # SQLite 파일을 리포지토리/아티팩트로 보존하고 싶다면 아래처럼 커밋하거나
-      # actions/upload-artifact로 업로드한다. 없으면 매 실행마다 빈 DB로 시작한다.
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pipeline-db
-          path: data/pipeline.db
+          DATABASE_URL: postgresql://briefyi:briefyi@localhost:5432/briefyi

@@ -8,9 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# SQLite 데이터는 이미지가 아니라 볼륨(docker-compose.yml의 ./data)에 영속화한다.
-RUN mkdir -p /app/data
-ENV DB_PATH=/app/data/pipeline.db
+# 데이터는 별도의 db 서비스(PostgreSQL)에 저장한다. 접속 정보는 DATABASE_URL로 주입되며
+# docker-compose.yml이 컨테이너 내부용 값(host=db)을 설정한다.
 
-# main.py는 실행 후 종료되는 배치 잡이다(상시 서버 아님).
+# main.py는 single 모드에서 실행 후 종료되는 배치 잡이다(상시 서버 아님).
 ENTRYPOINT ["python", "main.py"]
