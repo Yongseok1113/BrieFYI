@@ -1,0 +1,42 @@
+name: daily-digest
+
+on:
+  schedule:
+    - cron: "0 23 * * *" # 매일 08:00 KST (UTC 23:00 전날)
+  workflow_dispatch: {} # 수동 실행 버튼
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    # 파이프라인이 PostgreSQL을 쓰므로 서비스 컨테이너로 띄운다. 스키마는 앱의 init_db()가
+    # 만든다. 이 DB는 잡이 끝나면 사라지는 일회용이므로, 이력을 유지하려면 외부(관리형) DB의
+    # DATABASE_URL을 Secrets로 넣고 아래 services 블록을 제거할 것.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: briefyi
+          POSTGRES_USER: briefyi
+          POSTGRES_PASSWORD: briefyi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U briefyi -d briefyi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python main.py
+        env:
+          GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          NEWS_KEYWORD: "AI"
+          DATABASE_URL: postgresql://briefyi:briefyi@localhost:5432/briefyi
