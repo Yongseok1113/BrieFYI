@@ -1,0 +1,47 @@
+services:
+  # PostgreSQL. 스키마는 Dockerfile.db가 초기화 스크립트로 넣어둔다.
+  # 단독 기동: scripts/db-up.ps1 (Windows) / scripts/db-up.sh (macOS·Linux)
+  #            또는 docker compose up -d db
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    image: briefyi-db:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-briefyi}
+      POSTGRES_USER: ${POSTGRES_USER:-briefyi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-briefyi}
+    ports:
+      # 호스트에서 직접 python main.py를 돌릴 때 접속하는 포트.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-briefyi} -d ${POSTGRES_DB:-briefyi}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    restart: unless-stopped
+
+  digest:
+    build: .
+    env_file:
+      - .env
+    environment:
+      # 컨테이너 내부에서는 호스트가 localhost가 아니라 서비스명(db)이다.
+      # env_file의 DATABASE_URL보다 이 값이 우선한다.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-briefyi}:${POSTGRES_PASSWORD:-briefyi}@db:5432/${POSTGRES_DB:-briefyi}
+    depends_on:
+      db:
+        condition: service_healthy
+    # main.py는 single 모드에서 실행 후 종료되는 배치 잡이므로 `docker compose up`으로
+    # 상시 띄워둘 필요가 없다. 스케줄 실행은 호스트 cron이 아래 명령을 주기 호출한다:
+    #   docker compose run --rm digest
+    # 파라미터를 바꾸고 싶으면:
+    #   docker compose run --rm digest --keyword "AI" --days 1
+    # 컨테이너 안에서 주기 실행(trigger 모드)을 쓰려면:
+    #   docker compose run --rm digest --mode trigger --interval 3600
+
+volumes:
+  pgdata:

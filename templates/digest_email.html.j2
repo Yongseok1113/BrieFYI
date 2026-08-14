@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="utf-8" /></head>
+<body style="font-family: -apple-system, sans-serif; max-width: 640px; margin: 0 auto; color: #1a1a1a;">
+  <h1 style="font-size: 20px;">{{ digest_date }} 뉴스·기술 다이제스트 ({{ keyword }})</h1>
+
+  {% for topic in summaries %}
+  <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e5e5;">
+    <h2 style="font-size: 16px;">{{ topic.topic_title }}</h2>
+    <p style="font-size: 14px; line-height: 1.6;">{{ topic.summary }}</p>
+  </div>
+  {% endfor %}
+
+  <h2 style="font-size: 16px;">핵심 인사이트</h2>
+  <ul style="font-size: 14px; line-height: 1.8;">
+    {% for item in insights %}
+    <li>{{ item.text }} (<a href="{{ item.source_url }}">원문</a>)</li>
+    {% endfor %}
+  </ul>
+
+  <h2 style="font-size: 16px;">비즈니스 시사점</h2>
+  <p style="font-size: 14px; line-height: 1.6;">{{ business_implication }}</p>
+</body>
+</html>
