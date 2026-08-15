@@ -16,6 +16,12 @@ class Config:
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
+    # Hugging Face Inference API (RAG dense embedding)
+    HF_TOKEN = os.getenv("HF_TOKEN", "")
+    HF_EMBEDDING_MODEL = os.getenv("HF_EMBEDDING_MODEL", "BAAI/bge-m3")
+    HF_EMBEDDING_DIMENSION = 1024
+    HF_EMBEDDING_TIMEOUT_SECONDS = 120
+
     # Email (Resend)
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
     EMAIL_FROM = os.getenv("EMAIL_FROM", "")

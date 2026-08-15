@@ -118,7 +118,8 @@ class ConnectTest(unittest.TestCase):
             ).fetchall()
 
         self.assertEqual(
-            {"raw_articles", "digests", "send_log"}, {r["table_name"] for r in rows}
+            {"raw_articles", "digests", "send_log", "article_chunks", "chunk_embeddings"},
+            {r["table_name"] for r in rows},
         )
 
     def test_없는_DB_이름으로는_접속에_실패한다(self):

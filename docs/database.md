@@ -9,8 +9,8 @@
 | --- | --- |
 | compose 서비스명 | `db` |
 | 컨테이너명 | `briefyi-db-1` |
-| 이미지 | `briefyi-db:16` (`Dockerfile.db` = `postgres:16-alpine` + `db/schema.sql`) |
-| 서버 버전 | PostgreSQL 16.14 (alpine, musl) |
+| 이미지 | `briefyi-db:16` (`Dockerfile.db` = `pgvector:pg16` + `db/schema.sql`) |
+| 서버 버전 | PostgreSQL 16 (alpine, musl) + pgvector |
 | 데이터 볼륨 | `briefyi_pgdata` → 컨테이너 내부 `/var/lib/postgresql/data` |
 | 포트 매핑 | 호스트 `${POSTGRES_PORT:-5432}` → 컨테이너 `5432` |
 | 서버 인코딩 | `UTF8` (`POSTGRES_INITDB_ARGS=--encoding=UTF8`) |
@@ -61,7 +61,11 @@ User `briefyi`, Password `briefyi`(또는 `.env`에 설정한 값)로 접속한�
 
 ## 3. 테이블
 
-스키마 정의는 `db/schema.sql` 하나이며, 컨테이너 최초 기동 시
+스키마는 두 파일로 나뉜다.
+
+1. `db/schema.sql`: 기사, 다이제스트, 발송 이력
+2. `db/vector_schema.sql`: pgvector 확장, 기사 chunk, 모델별 embedding
+ 컨테이너 최초 기동 시
 `/docker-entrypoint-initdb.d/01-schema.sql`로 자동 적용되고 앱 시작 시 `init_db()`가
 `CREATE TABLE IF NOT EXISTS`로 한 번 더 확인한다.
 
