@@ -1,0 +1,14 @@
+# 다이제스트 파이프라인용 PostgreSQL 이미지.
+# 공식 이미지에 스키마 초기화 스크립트만 얹은 얇은 래퍼다.
+FROM postgres:16-alpine
+
+# /docker-entrypoint-initdb.d 의 스크립트는 '데이터 디렉터리가 비어 있을 때만'
+# 실행된다. 즉 볼륨(pgdata)이 이미 있으면 다시 돌지 않는다. 스키마를 바꿨다면
+# 앱의 init_db()가 CREATE TABLE IF NOT EXISTS로 반영하거나,
+# scripts/db-up.ps1 -Reset -Force 로 볼륨을 지우고 처음부터 다시 만든다.
+COPY db/schema.sql /docker-entrypoint-initdb.d/01-schema.sql
+
+# 한글 기사 제목/본문을 저장하므로 DB 인코딩을 UTF8로 못박는다.
+ENV POSTGRES_INITDB_ARGS="--encoding=UTF8"
+
+EXPOSE 5432
