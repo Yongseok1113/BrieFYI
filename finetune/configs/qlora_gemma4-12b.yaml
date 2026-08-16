@@ -1,0 +1,23 @@
+# 성능 우선 대안 (design doc 1절). Apache 2.0(2026.4~), 8B보다 크고 라이선스는 동급.
+# 코랩 무료 T4에서는 8B보다 빠듯함 — OOM 시 max_seq_len을 512로 낮출 것 (1.1절).
+base_model: google/gemma-4-12b-it
+task: summarize
+quantization: qlora_4bit
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+train:
+  learning_rate: 2e-4
+  epochs: 3
+  effective_batch_size: 16
+  max_seq_len: 1024
+  lr_scheduler: cosine
+  save_strategy: steps
+  save_steps: 150   # 세션당 스텝 시간이 더 길어(6~9초) 더 자주 저장
+  seed: 42
+data:
+  train_path: finetune/data/processed/summarize_train.jsonl
+  val_path: finetune/data/processed/summarize_val.jsonl
+  data_version: v1
+output_dir: runs/gemma4-12b-summarize-v1

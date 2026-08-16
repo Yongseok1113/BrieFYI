@@ -1,0 +1,23 @@
+# 학습/추론 핵심
+torch>=2.3
+transformers>=4.45
+peft>=0.13
+trl>=0.11
+bitsandbytes>=0.44
+accelerate>=0.34
+datasets>=2.20
+
+# 설정/데이터
+pyyaml>=6.0
+
+# 평가 (design doc 4절 1단계)
+rouge-score>=0.1.2
+bert-score>=0.3.13
+
+# 3단계 grounding check (Claude judge), digests_export.py의 repo DB 접근
+anthropic>=0.34
+psycopg[binary]>=3.1
+python-dotenv>=1.0
+
+# 테스트
+pytest>=8.0

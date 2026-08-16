@@ -1,0 +1,19 @@
+# 코랩 노트북 전용 의존성 목록. requirements.txt와 달리 torch는 뺐다 —
+# Colab 런타임에 이미 GPU/CUDA에 맞는 torch가 깔려 있어 재설치하면 오히려
+# 버전이 꼬여 CUDA가 안 잡히는 경우가 많다. psycopg도 뺐다 — Colab에서는
+# DB에 직접 접속하지 않고, 로컬에서 prepare_data.py로 미리 뽑은 JSONL만 업로드해서 쓴다
+# (DB 접속 정보를 Colab에 올리지 않기 위한 선택이기도 함).
+transformers>=4.45
+peft>=0.13
+trl>=0.11
+bitsandbytes>=0.44
+accelerate>=0.34
+datasets>=2.20
+pyyaml>=6.0
+sentencepiece>=0.2.0
+protobuf>=4.25
+
+# 평가용 (선택)
+rouge-score>=0.1.2
+bert-score>=0.3.13
+anthropic>=0.34
