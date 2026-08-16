@@ -2,3 +2,5 @@
 *.pyc
 data
 */**/*.Identifier
+*/**/__pycache__
+__pycache__
