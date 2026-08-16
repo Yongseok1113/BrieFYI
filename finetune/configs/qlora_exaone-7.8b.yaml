@@ -1,0 +1,23 @@
+# 팀원이 검토 중이던 모델. 사용 전 EXAONE AI Model License의 상업적 이용/재배포
+# 조건을 반드시 먼저 확인할 것 (design doc 1절, 6.7절 — 아직 미확인 상태).
+base_model: LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct
+task: summarize
+quantization: qlora_4bit
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+train:
+  learning_rate: 2e-4
+  epochs: 3
+  effective_batch_size: 16
+  max_seq_len: 1024
+  lr_scheduler: cosine
+  save_strategy: steps
+  save_steps: 200
+  seed: 42
+data:
+  train_path: finetune/data/processed/summarize_train.jsonl
+  val_path: finetune/data/processed/summarize_val.jsonl
+  data_version: v1
+output_dir: runs/exaone-7.8b-summarize-v1

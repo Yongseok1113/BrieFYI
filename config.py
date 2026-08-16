@@ -16,6 +16,12 @@ class Config:
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
+    # Hugging Face Inference API (finetune/으로 학습한 요약 모델. SUMMARIZER_PROVIDER=hf일 때 사용)
+    # HF_MODEL_ID는 코랩에서 병합 후 push한 모델 저장소 이름
+    # (예: "username/briefyi-qwen3-8b-summarize"). tools/hf_llm_client.py 참고.
+    HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
+    HF_MODEL_ID = os.getenv("HF_MODEL_ID", "")
+
     # Email (Resend)
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
     EMAIL_FROM = os.getenv("EMAIL_FROM", "")

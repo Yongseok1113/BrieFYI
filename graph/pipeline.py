@@ -2,20 +2,20 @@
 
 지금 단계는 '고정 파이프라인'이므로 조건 분기 없이
 fetch -> store -> summarize -> insight -> format -> send 순서로만 흐른다.
-추후 에이전트화(재시도 판단, 소스 선택 등)할 때 이 그래프에
-조건부 엣지(add_conditional_edges)를 추가하면 된다.
+각 노드는 agents/ 패키지의 해당 역할 에이전트에 위임한다(agents/registry.py 참고).
+추후 조건부 엣지(add_conditional_edges)를 추가할 때는
+OrchestratorAgent.decide_after_store 같은 판단 메서드를 연결하면 된다.
 """
 from datetime import date
 from typing import Optional, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from db.db import insert_articles, log_send, save_digest
+from agents.registry import build_agents
+from db.db import insert_articles
 from tools.email_format import format_email
-from tools.email_send import send_email
-from tools.insight import extract_insights
-from tools.news_fetch import fetch_news
-from tools.summarize import summarize_articles
+
+agents = build_agents()
 
 
 class PipelineState(TypedDict):
@@ -34,8 +34,7 @@ class PipelineState(TypedDict):
 
 
 def fetch_news_node(state: PipelineState) -> dict:
-    articles = fetch_news(state["keyword"], state["lookback_days"], state["max_results"])
-    return {"raw_articles": articles}
+    return agents["collector"].run(state)
 
 
 def store_raw_node(state: PipelineState) -> dict:
@@ -44,14 +43,11 @@ def store_raw_node(state: PipelineState) -> dict:
 
 
 def summarize_node(state: PipelineState) -> dict:
-    summaries = summarize_articles(state["raw_articles"])
-    return {"summaries": summaries}
+    return agents["summarizer"].run_summarize(state)
 
 
 def insight_node(state: PipelineState) -> dict:
-    insight = extract_insights(state["summaries"])
-    digest_id = save_digest(state["digest_date"], state["keyword"], state["summaries"], insight)
-    return {"insight": insight, "digest_id": digest_id}
+    return agents["summarizer"].run_insight(state)
 
 
 def format_email_node(state: PipelineState) -> dict:
@@ -60,16 +56,7 @@ def format_email_node(state: PipelineState) -> dict:
 
 
 def send_email_node(state: PipelineState) -> dict:
-    from config import config
-
-    subject = f"[{state['digest_date']}] {state['keyword']} 뉴스·기술 다이제스트"
-    try:
-        result = send_email(subject, state["email_html"])
-        log_send(state["digest_id"], "email", config.EMAIL_TO, "success")
-        return {"send_result": result}
-    except Exception as exc:  # noqa: BLE001 - MVP 단계는 넓게 잡고 로그만 남긴다
-        log_send(state["digest_id"], "email", config.EMAIL_TO, "failed", str(exc))
-        return {"error": str(exc)}
+    return agents["distributor"].run(state)
 
 
 def build_graph():

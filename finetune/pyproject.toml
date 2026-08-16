@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "summarize-ft"
+version = "0.1.0"
+description = "BrieFYI 요약/인사이트 모델 LoRA 파인튜닝 패키지"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `pip install -e .` 없이 `pytest finetune/`만 돌려도 summarize_ft가 바로 import되도록
+# src를 pythonpath에 추가한다 (pytest 7+ 내장 옵션, 별도 플러그인 불필요).
+pythonpath = ["src"]

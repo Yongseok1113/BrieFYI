@@ -1,0 +1,24 @@
+# 스모크 테스트용 초소형 설정. GPU/실제 API 키가 없어도 파이프라인이 끝까지
+# 도는지 몇 분 안에 확인하는 용도 (design doc 6.4절).
+#   python -m summarize_ft.train --config finetune/configs/smoke.yaml
+base_model: Qwen/Qwen3-0.6B-Instruct   # 스모크 테스트 전용 초소형 모델, 실제 학습에는 쓰지 않음
+task: summarize
+quantization: none
+lora:
+  r: 4
+  alpha: 8
+  dropout: 0.0
+train:
+  learning_rate: 1e-4
+  epochs: 1
+  effective_batch_size: 2
+  max_seq_len: 256
+  lr_scheduler: constant
+  save_strategy: steps
+  save_steps: 5
+  seed: 42
+data:
+  train_path: finetune/data/sample/summarize_train.sample.jsonl
+  val_path: finetune/data/sample/summarize_val.sample.jsonl
+  data_version: smoke
+output_dir: runs/smoke-test

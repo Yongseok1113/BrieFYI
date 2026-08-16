@@ -1,0 +1,23 @@
+# 비양자화(bf16) 버전 — 24GB+ VRAM GPU(A10/A100 등)가 있을 때 사용.
+# QLoRA 대비 정밀도 손실이 없고 학습이 더 빠르지만, 코랩 무료 T4(15GB)에서는 OOM난다.
+base_model: LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct
+task: summarize
+quantization: none
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+train:
+  learning_rate: 1e-4
+  epochs: 2
+  effective_batch_size: 32
+  max_seq_len: 1024
+  lr_scheduler: cosine
+  save_strategy: steps
+  save_steps: 200
+  seed: 42
+data:
+  train_path: finetune/data/processed/summarize_train.jsonl
+  val_path: finetune/data/processed/summarize_val.jsonl
+  data_version: v1
+output_dir: runs/exaone-7.8b-bf16-v1

@@ -1,0 +1,23 @@
+# 기본 추천 모델 (design doc 1절). Apache 2.0, LoRA/QLoRA 생태계 자료가 가장 풍부함.
+base_model: Qwen/Qwen3-8B-Instruct
+task: summarize
+quantization: qlora_4bit
+# target_modules는 생략 — modeling.py의 detect_target_modules가 자동 감지한다 (6.3절)
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+train:
+  learning_rate: 2e-4
+  epochs: 3
+  effective_batch_size: 16
+  max_seq_len: 1024
+  lr_scheduler: cosine
+  save_strategy: steps
+  save_steps: 200
+  seed: 42
+data:
+  train_path: finetune/data/processed/summarize_train.jsonl
+  val_path: finetune/data/processed/summarize_val.jsonl
+  data_version: v1
+output_dir: runs/qwen3-8b-summarize-v1
