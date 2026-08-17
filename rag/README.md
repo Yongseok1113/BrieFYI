@@ -35,11 +35,12 @@ raw_articles(title, description)
 
 ## 설정과 실행 조건
 
-프로젝트 루트의 `.env`에는 다음 두 값이 필요하다.
+프로젝트 루트의 `.env`에는 embedding과 4-Layer 추출에 사용할 API 키가 필요하다.
 
 ```dotenv
 HF_TOKEN="your_huggingface_token"
 HF_EMBEDDING_MODEL="BAAI/bge-m3"
+ANTHROPIC_API_KEY="your_anthropic_api_key"
 ```
 
 고정 가능한 값은 환경변수로 늘리지 않고 소스 설정을 사용한다.
@@ -49,7 +50,7 @@ HF_EMBEDDING_MODEL="BAAI/bge-m3"
 - chunk size: `500` token
 - 현재 overlap: `0`
 
-필요한 Python 의존성은 `requests`, `psycopg`, `pgvector`, `python-dotenv`이며
+필요한 Python 의존성은 `anthropic`, `requests`, `psycopg`, `pgvector`, `python-dotenv`이며
 프로젝트 `requirements.txt`에 포함되어 있다. DB는 pgvector 확장이 설치된
 PostgreSQL 16이어야 한다.
 
@@ -76,6 +77,43 @@ raw_articles 1 --- N article_chunks 1 --- N chunk_embeddings
 
 동일 chunk에 여러 모델의 벡터를 함께 둘 수 있고, 검색할 때는 query와 같은
 `embedding_model`, `embedding_dimension`만 선택한다.
+
+## 4-Layer metadata prototype
+
+현재 baseline에서 4-Layer는 검색용 metadata이며 embedding 대상이 아니다.
+
+```text
+외부 입력: Category / Domain
+                    + 기사 제목 / description
+                              -> Anthropic Entity / Event 추출
+                              -> article_topics UPSERT
+
+raw_articles 1 --- 1 article_topics
+     |
+     +--- N article_chunks 1 --- N chunk_embeddings
+```
+
+- `category`: 기술, 경제 같은 대분류
+- `domains`: AI, 반도체 같은 세부 도메인
+- `entities`: 기사에서 핵심적으로 다루는 회사·기관·인물·제품, 최대 3개
+- `events`: 핵심 사건·행동을 나타내는 짧은 명사구, 최대 2개
+
+`topic_text`와 topic `embedding`은 후속 실험용 컬럼이며 현재는 NULL로 둔다. 기존
+기사의 chunk embedding은 다시 만들지 않고 그대로 연결해서 사용한다.
+
+현재 DB에서 내용이 확인된 AI 기사 10건을 독립 실행하려면 다음 명령을 사용한다.
+
+```bash
+python -m rag.topic_indexer \
+  --article-ids 19 20 21 22 23 24 25 26 27 28 \
+  --category 기술 \
+  --domain AI
+```
+
+여러 Domain을 전달할 때는 `--domain`을 반복한다. CLI는 `init_db()`로 스키마를 먼저
+확인하고, 지정한 ID가 하나라도 없으면 Anthropic API를 호출하기 전에 중단한다.
+Category/Domain 검색 필터, Entity/Event boost, 전체 기사 백필, Collector와 pipeline
+연결은 이 prototype에 포함하지 않는다.
 
 ## 청킹과 Embedding
 
@@ -108,9 +146,13 @@ one_result = index_article(19)
 selected_results = index_articles([19, 20, 21])
 ```
 
-재실행 시 DB unique key를 기준으로 upsert하므로 같은 모델의 행이 계속 늘어나지
-않는다. 원본 chunk 텍스트가 달라지면 기존 chunk에 연결된 embedding을 삭제한 뒤
-현재 텍스트로 다시 저장한다.
+`index_all_articles()`는 `chunk_embeddings`가 아직 없는 기사만 선택한다. 재실행하면
+이미 완료된 기사는 HF API에 다시 보내지 않는다.
+
+`index_article()`과 `index_articles()`를 명시적으로 호출하면 기존 기사도 다시 처리한다.
+저장 시 DB unique key를 기준으로 upsert하므로 같은 모델의 행이 계속 늘어나지 않는다.
+원본 chunk 텍스트가 달라지면 기존 chunk에 연결된 embedding을 삭제한 뒤 현재 텍스트로
+다시 저장한다.
 
 ## 검색 방식
 
@@ -236,6 +278,8 @@ RAG 단위·DB 통합 테스트는 다음 명령으로 실행한다.
 python -m unittest \
   rag.tests.test_chunk \
   rag.tests.test_embed \
+  rag.tests.test_indexer \
+  rag.tests.test_topic_indexer \
   rag.tests.test_retriever \
   rag.tests.test_db
 ```
@@ -247,6 +291,7 @@ python -m unittest \
 - vector/text 검색 SQL
 - weighted RRF, 동점 dense rank, normalized 비교 방식
 - 재인덱싱 unique key와 DB FK/차원 제약
+- Entity/Event JSON 검증과 article_topics UPSERT/FK CASCADE
 
 테스트의 HF 호출은 mock이며 실제 API 품질이나 네트워크 상태를 검증하지 않는다.
 DB 통합 테스트는 `https://test.invalid/` 접두사의 임시 기사만 만들고 종료 시

@@ -25,5 +25,20 @@ CREATE TABLE IF NOT EXISTS chunk_embeddings (
     CHECK (vector_dims(embedding) = embedding_dimension)
 );
 
+CREATE TABLE IF NOT EXISTS article_topics (
+    article_id  BIGINT PRIMARY KEY
+                REFERENCES raw_articles(id) ON DELETE CASCADE,
+
+    category    TEXT,
+    domains     TEXT[],
+    entities    TEXT[],
+    events      TEXT[],
+
+    topic_text  TEXT,
+    embedding   vector(1024),
+
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS article_chunks_article_id_idx
     ON article_chunks (article_id, chunk_index);

@@ -116,7 +116,20 @@ def index_article(article_id: int) -> dict:
 
 
 def index_all_articles() -> list[dict]:
-    """현재 DB의 raw_articles 전체를 인덱싱한다. 외부 데이터는 읽지 않는다."""
+    """아직 embedding이 없는 기사만 인덱싱한다."""
     with get_conn() as conn:
-        article_ids = [row["id"] for row in conn.execute("SELECT id FROM raw_articles ORDER BY id")]
+        article_ids = [
+            row["id"]
+            for row in conn.execute(
+                """SELECT ra.id
+                   FROM raw_articles AS ra
+                   WHERE NOT EXISTS (
+                       SELECT 1
+                       FROM article_chunks AS ac
+                       JOIN chunk_embeddings AS ce ON ce.chunk_id = ac.id
+                       WHERE ac.article_id = ra.id
+                   )
+                   ORDER BY ra.id"""
+            )
+        ]
     return index_articles(article_ids)
