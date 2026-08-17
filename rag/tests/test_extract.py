@@ -1,8 +1,10 @@
-"""실제 GLiNER2 model 없이 구조화 Event 후처리를 검증한다."""
+"""실제 GLiNER2 model 없이 Event 후처리와 4-Layer metadata 집계를 검증한다."""
 import unittest
+from unittest import mock
 
-from rag.event_extractor import (
+from rag.extract import (
     GLiNER2EventExtractor,
+    GLiNER2TopicExtractor,
     aggregate_event_candidates,
     event_candidates_from_result,
     normalize_argument_text,
@@ -16,7 +18,7 @@ class _WordTokenizer:
         return text.split()
 
 
-class _FakeSchema:
+class _FakeEventSchema:
     def entities(self, entity_types):
         self.entity_types = entity_types
         return self
@@ -31,7 +33,7 @@ class _FakeProcessor:
     tokenizer = _WordTokenizer()
 
 
-class _FakeModel:
+class _FakeEventModel:
     processor = _FakeProcessor()
 
     def __init__(self, result):
@@ -40,13 +42,33 @@ class _FakeModel:
         self.extract_calls = []
 
     def create_schema(self):
-        schema = _FakeSchema()
+        schema = _FakeEventSchema()
         self.schemas.append(schema)
         return schema
 
     def extract(self, text, schema, **kwargs):
         self.extract_calls.append((text, schema, kwargs))
         return self.result
+
+
+class _FakeTopicSchema:
+    def entities(self, *_args, **_kwargs):
+        return self
+
+    def classification(self, *_args, **_kwargs):
+        return self
+
+
+class _FakeTopicModel:
+    def __init__(self, results):
+        self.processor = mock.Mock(tokenizer=_WordTokenizer())
+        self.results = iter(results)
+
+    def create_schema(self):
+        return _FakeTopicSchema()
+
+    def extract(self, *_args, **_kwargs):
+        return next(self.results)
 
 
 def _span(text: str, value: str, confidence: float = 0.9, *, start: int | None = None):
@@ -70,7 +92,7 @@ class EventExtractorTest(unittest.TestCase):
                 ]
             },
         }
-        model = _FakeModel(result)
+        model = _FakeEventModel(result)
 
         events = GLiNER2EventExtractor(model).extract(text)
 
@@ -185,6 +207,57 @@ class EventExtractorTest(unittest.TestCase):
 
         self.assertEqual(100, event["arguments"][0]["span_start"])
         self.assertGreater(event["evidence_end"], 100)
+
+
+class TopicExtractorTest(unittest.TestCase):
+    def test_여러_window의_metadata를_article_level로_집계한다(self):
+        model = _FakeTopicModel(
+            [
+                {
+                    "category": {"label": "기술", "confidence": 0.8},
+                    "domain": [
+                        {"label": "AI", "confidence": 0.9},
+                        {"label": "기타", "confidence": 0.5},
+                    ],
+                    "entities": {
+                        "company": [
+                            {"text": "NVIDIA가", "confidence": 0.9},
+                            {"text": "OpenAI", "confidence": 0.8},
+                        ]
+                    },
+                },
+                {
+                    "category": {"label": "산업", "confidence": 0.95},
+                    "domain": [
+                        {"label": "반도체", "confidence": 0.85},
+                        {"label": "AI", "confidence": 0.7},
+                    ],
+                    "entities": {
+                        "company": [
+                            {"text": "NVIDIA", "confidence": 0.7},
+                            {"text": "Blackwell", "confidence": 0.96},
+                            {"text": "Microsoft", "confidence": 0.4},
+                        ]
+                    },
+                },
+            ]
+        )
+        extractor = GLiNER2TopicExtractor(model)
+
+        result = extractor.extract(" ".join(f"word{i}" for i in range(450)))
+
+        self.assertEqual("산업", result["category"])
+        self.assertEqual(["AI", "반도체"], result["domains"])
+        self.assertEqual(["Blackwell", "NVIDIA", "OpenAI"], result["entities"])
+
+    def test_분류_출력이_없으면_기타를_사용한다(self):
+        extractor = GLiNER2TopicExtractor(_FakeTopicModel([{"entities": {}}]))
+
+        result = extractor.extract("short text")
+
+        self.assertEqual("기타", result["category"])
+        self.assertEqual(["기타"], result["domains"])
+        self.assertEqual([], result["entities"])
 
 
 if __name__ == "__main__":

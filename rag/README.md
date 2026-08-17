@@ -10,17 +10,22 @@ DB 계약을 먼저 검증한 뒤, 향후 뉴스 agent가 호출하는 Tool로 `
 
 ## 현재 구현 범위
 
+패키지 구성은 develop 브랜치의 `data_pipeline`을 따른다 — SQL은 `db.py` 한 곳, 실행
+진입점은 `cli.py` 한 곳에 모으고 나머지는 기능별 모듈로 나눈다. 다만 rag는 별도 이미지가
+아니라 메인 앱과 같은 DB에 붙으므로, DB 연결(`db.db.get_conn`)과 뉴스 수집
+도구(`tools.news_fetch`)는 레포 루트 것을 재사용한다.
+
 | 파일 | 역할 |
 | --- | --- |
-| `chunk.py` | 본문 우선 텍스트 구성과 BGE-M3 500/50 token chunk 생성 |
+| `content.py` | 기사 URL 본문 수집, 본문 우선 텍스트 구성, BGE-M3 500/50 token chunk 생성 |
 | `embed.py` | Hugging Face Inference API로 BGE-M3 dense embedding 생성 |
+| `extract.py` | GLiNER2 Category/Domain/Entity 집계와 relation 추출·false-positive 후처리 |
+| `taxonomy.py` | Category/Domain 고정 taxonomy, AI·기술 relation 10개와 role mapping, 추출 version |
+| `db.py` | RAG 전용 SQL 전부 (기사 조회, chunk/embedding/4-Layer 저장, 검색) |
 | `indexer.py` | 본문·GLiNER2 topic/Event·chunk embedding을 함께 저장하는 bounded worker |
-| `topic_taxonomy.py` | 실제 프로젝트용 Category/Domain 고정 taxonomy |
-| `topic_extractor.py` | GLiNER2 Category/Domain/Entity 추출과 article-level 집계 |
-| `event_taxonomy.py` | AI·기술 relation 10개와 role mapping, 추출 version |
-| `event_extractor.py` | GLiNER2 relation 추출과 false-positive 후처리 |
-| `event_indexer.py` | 기존 article chunk의 구조화 Event/Argument 저장 |
-| `retriever.py` | vector, text, normalized hybrid, RRF hybrid 검색 |
+| `retriever.py` | vector, text, weighted RRF hybrid 검색 |
+| `pipeline.py` | GNews 수집부터 indexing까지 이어 실행하는 오케스트레이션 |
+| `cli.py` | `run`/`index`/`events`/`search` 단일 CLI 진입점 |
 | `rag_function_test.ipynb` | DB 확인부터 인덱싱·검색까지 단계별 기능 테스트 |
 
 ```text
@@ -51,14 +56,13 @@ RAG 핵심인 `raw_articles -> article_chunks -> chunk_embeddings -> retrieve()`
 
 | 기능 | 공개 진입점 | 현재 상태 |
 | --- | --- | --- |
-| 수집+4-Layer+embedding | `python -m rag.ingestion` | GNews 신규 기사 end-to-end 처리 |
-| chunk/4-Layer/embedding | `index_article(s)`, `index_all_articles()` / `python -m rag.indexer` | 독립 실행 가능 |
-| vector/text/hybrid 검색 | `retrieve()` / `python -m rag.retriever` | 독립 실행 가능 |
-| Category/Domain/Entity prototype | `python -m rag.topic_indexer` | 명시 ID 기반 독립 실행 가능 |
-| 구조화 Event 저장 | `index_event_articles()` / `python -m rag.event_indexer` | 명시 ID 기반 local 독립 실행 가능 |
+| 수집+4-Layer+embedding | `run_all()` / `python -m rag.cli run` | GNews 신규 기사 end-to-end 처리 |
+| chunk/4-Layer/embedding | `index_articles()`, `index_all_articles()` / `python -m rag.cli index` | 독립 실행 가능 |
+| vector/text/hybrid 검색 | `retrieve()` / `python -m rag.cli search` | 독립 실행 가능 |
+| 구조화 Event 저장 | `index_events()` / `python -m rag.cli events` | 명시 ID 기반 local 독립 실행 가능 |
 | 전체 RAG package | `python -m rag` | `rag/__main__.py`가 없어 지원하지 않음 |
 
-따라서 향후 Agent Tool은 기존 함수를 얇게 감싸면 된다. `python -m rag.ingestion`은
+따라서 향후 Agent Tool은 기존 함수를 얇게 감싸면 된다. `python -m rag.cli run`은
 GNews 수집부터 GLiNER2 4-Layer와 RAG 저장까지 수행하지만, 검색 답변 생성과 digest 발송을
 포함하는 `python -m rag` 전체 application은 아직 없다.
 
@@ -197,15 +201,18 @@ raw_articles 1 --- 1 article_topics
 GNews 신규 기사를 수집하면서 4-Layer와 RAG를 함께 저장하려면 다음을 실행한다.
 
 ```bash
-python -m rag.ingestion --keyword AI --days 1 --max-results 10 --device cuda
+python -m rag.cli run --keyword AI --days 1 --max-results 10 --device cuda
 
 # 기존 article ID를 본문부터 다시 처리
-python -m rag.indexer --article-ids 19 20 21 --device cuda
+python -m rag.cli index --article-ids 19 20 21 --device cuda
+
+# embedding이 아직 없는 기사만 제한 건수로 처리
+python -m rag.cli index --limit 20 --device cuda
 ```
 
-GPU가 없는 환경에서는 `--device cpu`를 명시한다. 기존 수동 Category/Domain CLI인
-`python -m rag.topic_indexer`도 호환용으로 유지하지만 기본 ingestion 경로는 GLiNER2가
-Category/Domain/Entity를 자동 생성한다.
+GPU가 없는 환경에서는 `--device cpu`를 명시한다. Category/Domain/Entity는 GLiNER2가
+자동 생성하며, 사람이 Category/Domain을 직접 지정하던 기존 prototype 경로
+(`rag.topic_indexer`)는 제거했다.
 
 ## 구조화 Event indexing
 
@@ -231,7 +238,7 @@ Relation schema를 각각 실행하고, 두 결과를 합쳐 argument-Entity 일
 Event만 명시적으로 재처리할 때는 다음 CLI를 사용한다.
 
 ```bash
-python -m rag.event_indexer \
+python -m rag.cli events \
   --article-ids 19 20 21 \
   --device cuda
 ```
@@ -270,33 +277,35 @@ CHUNK_OVERLAP_TOKENS = 50
 ## 인덱싱
 
 ```python
-from rag.indexer import index_all_articles, index_article, index_articles
+from rag.indexer import index_all_articles, index_articles
 
 all_results = index_all_articles()
-one_result = index_article(19)
 selected_results = index_articles([19, 20, 21])
 ```
 
 `index_all_articles()`는 `chunk_embeddings`가 아직 없는 기사만 선택한다. 재실행하면
 이미 완료된 기사는 HF API에 다시 보내지 않는다.
 
-`index_article()`과 `index_articles()`를 명시적으로 호출하면 기존 기사도 다시 처리한다.
+`index_articles()`를 명시적으로 호출하면 기존 기사도 다시 처리한다.
 저장 시 DB unique key를 기준으로 upsert하므로 같은 모델의 행이 계속 늘어나지 않는다.
 원본 chunk 텍스트가 달라지면 기존 chunk에 연결된 embedding을 삭제한 뒤 현재 텍스트로
 다시 저장한다.
 
 ## 검색 방식
 
-- `vector`: query와 chunk embedding의 cosine, L2 또는 inner product 검색
+- `vector`: query와 chunk embedding의 cosine 검색
 - `text`: PostgreSQL `ts_rank_cd` 기반 full-text 검색
 - `hybrid`: vector와 text 후보 순위를 weighted RRF로 결합
 
 ```python
 from rag.retriever import retrieve
 
-vector_rows = retrieve("Claude", top_k=5, search_mode="vector", metric="cosine")
+vector_rows = retrieve("Claude", top_k=5, search_mode="vector")
 text_rows = retrieve("Claude", top_k=5, search_mode="text")
 ```
+
+문서 vector와 query vector를 `embed.py`에서 모두 L2 정규화하므로 cosine, L2, inner
+product의 순위가 서로 같다. 그래서 거리 연산자는 cosine(`<=>`) 하나로 고정했다.
 
 text 검색은 현재 `websearch_to_tsquery('simple', ...)`를 사용한다. `chunk_text`에
 제목이 이미 포함되므로 검색 SQL에서 제목을 다시 이어 붙이지 않는다.
@@ -324,7 +333,6 @@ rows = retrieve(
     query="Claude",
     top_k=5,
     search_mode="hybrid",
-    fusion_method="rrf",
     candidate_k=50,
     rrf_k=60,
     vector_weight=0.7,
@@ -348,10 +356,6 @@ metadata_score = score_scale * (
 불일치 후보도 제거하지 않으며 결과에는 `base_score`, `metadata_score`,
 `category_match`, `matched_domains`가 남는다.
 
-비교 실험을 위해 `fusion_method="normalized"`도 유지한다. 이 방식은 vector
-점수에는 후보군 min-max, 0이 자연스러운 최솟값인 text 점수에는 max scaling을
-적용한다.
-
 ## 파라미터
 
 - `top_k`: 최종 반환 개수
@@ -369,10 +373,9 @@ metadata_score = score_scale * (
 터미널에서도 실행할 수 있다.
 
 ```bash
-python -m rag.retriever \
+python -m rag.cli search \
   --query "Claude" \
   --mode hybrid \
-  --fusion rrf \
   --top-k 5 \
   --candidate-k 50 \
   --rrf-k 60 \
@@ -415,10 +418,12 @@ RUN_INTERACTIVE = False
 4. 다시 `False`로 바꾸고 `RUN_SEARCH=True`로 검색 비교
 5. 필요할 때 `RUN_INTERACTIVE=True`로 직접 질의
 
+현재 노트북은 `raw_articles -> article_chunks -> chunk_embeddings -> 검색`까지만 다루고
+GLiNER2 4-Layer(`article_topics`, `article_events`)는 포함하지 않는다. 또 6번 인덱싱 셀은
+GLiNER2와 CUDA가 준비된 환경에서만 실행된다. 4-Layer 구현 예시 셀은 후속 작업으로 추가한다.
+
 노트북 source를 수정한 뒤 셀을 재실행하지 않으면 과거 출력이 남아 있을 수 있다.
-특히 normalized hybrid에서 RRF로 변경한 뒤에는 검색 셀을 다시 실행해 rank와 RRF
-기여도가 표시되는지 확인한다. 실행 결과를 기록으로 남기려면 셀 실행 후 노트북을
-저장한다. 1024개 embedding 값 전체보다는 모델, 실제 차원, L2 norm을 기록하는 것이
+실행 결과를 기록으로 남기려면 셀 실행 후 노트북을 저장한다. 1024개 embedding 값 전체보다는 모델, 실제 차원, L2 norm을 기록하는 것이
 읽기 쉽다.
 
 ## 검증
@@ -426,38 +431,26 @@ RUN_INTERACTIVE = False
 RAG 단위·DB 통합 테스트는 다음 명령으로 실행한다.
 
 ```bash
-python -m unittest \
-  rag.tests.test_chunk \
-  rag.tests.test_embed \
-  rag.tests.test_indexer \
-  rag.tests.test_ingestion \
-  rag.tests.test_topic_extractor \
-  rag.tests.test_topic_indexer \
-  rag.tests.test_event_extractor \
-  rag.tests.test_event_indexer \
-  rag.tests.test_retriever \
-  rag.tests.test_db
+python -m unittest discover -s rag/tests -t . -p "test_*.py"
 ```
 
-검증 범위:
-
-- tokenizer 유무에 따른 청킹과 overlap 경계
-- HF 응답 개수·차원·정규화 검증
-- vector/text 검색 SQL
-- weighted RRF, 동점 dense rank, normalized 비교 방식
-- Category/Domain 가산점과 후보 재정렬
-- 재인덱싱 unique key와 DB FK/차원 제약
-- Entity JSON 검증과 article_topics UPSERT/FK CASCADE
-- 구조화 Event taxonomy, span 복원, Entity 일치, relation 경쟁과 중복 제거
-- Event/Argument/Status 저장, 0-event 완료, 재처리와 FK CASCADE
+| 테스트 | 범위 |
+| --- | --- |
+| `test_content.py` | 본문 추출 규칙(우선순위·fallback·비HTML 거부)과 offset 청킹·overlap 경계 |
+| `test_embed.py` | HF 응답 개수·차원·정규화 검증 |
+| `test_extract.py` | 구조화 Event taxonomy, span 복원, Entity 일치, relation 경쟁과 중복 제거, 4-Layer metadata 집계 |
+| `test_indexer.py` | 본문/fallback 선택, 대상 기사 선택, Event skip·force·기사별 실패 격리 |
+| `test_retriever.py` | weighted RRF, 동점 dense rank, Category/Domain 가산점과 후보 재정렬 |
+| `test_pipeline.py` | GNews 수집 결과 중 신규 기사만 indexer로 전달하는지 |
+| `test_db.py` | ID 정규화·검증, vector/text 검색 SQL, 재인덱싱 unique key, article_topics UPSERT, Event/Argument/Status 저장과 FK CASCADE |
 
 테스트의 HF 호출은 mock이며 실제 API 품질이나 네트워크 상태를 검증하지 않는다.
 DB 통합 테스트는 `https://test.invalid/` 접두사의 임시 기사만 만들고 종료 시
 삭제한다.
 
-2026-08-17 후속 구현에서 RAG test 62개가 통과했다. 그중 마지막 DB 비의존 중복수집
-test를 추가하기 직전 local PostgreSQL 포함 61개도 전부 통과했다. 실제 GNews 1건을
-수집해 본문 2개 chunk, BGE-M3 embedding, GLiNER2
+2026-08-17 패키지 재구성 이후 RAG test 56개가 통과한다(재구성 전 62개에서 제거된
+6개는 삭제한 수동 topic indexing 경로와 normalized fusion 테스트다). 재구성 전 실제
+GNews 1건을 수집해 본문 2개 chunk, BGE-M3 embedding, GLiNER2
 `기술`/`AI·스타트업` metadata와 구조화 Event 5개를 저장했고, boost retrieval에서
 metadata 가산점이 적용되는 것을 확인했다. smoke article과 모든 파생 행은 검증 후 삭제했다.
 
@@ -473,7 +466,7 @@ metadata 가산점이 적용되는 것을 확인했다. smoke article과 모든 
 
 1. 검색 평가셋
    - 대표 질의와 관련 기사 정답을 축적한다.
-   - vector, text, normalized hybrid, RRF를 Recall@k, Hit@k, nDCG@k로 비교한다.
+   - vector, text, RRF hybrid를 Recall@k, Hit@k, nDCG@k로 비교한다.
    - `candidate_k`, `rrf_k`, 가중치는 평가셋으로 조정한다.
 2. 기사 단위 결과 집계
    - 긴 기사에서 여러 chunk가 상위를 독점하지 않도록 `article_id`별 최고 chunk와

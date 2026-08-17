@@ -1,13 +1,8 @@
-"""검색 mode와 RRF/normalized hybrid 결합 테스트."""
+"""검색 mode와 weighted RRF 결합, metadata 가산점 테스트."""
 import unittest
 from unittest import mock
 
-from rag.retriever import (
-    _apply_metadata_boost,
-    _combine_normalized_scores,
-    _combine_rrf_scores,
-    retrieve,
-)
+from rag.retriever import _apply_metadata_boost, _combine_rrf_scores, retrieve
 
 
 def row(
@@ -69,23 +64,10 @@ class HybridTest(unittest.TestCase):
         self.assertEqual([1, 1, 2], [result["text_rank"] for result in results])
         self.assertAlmostEqual(results[0]["text_rrf_score"], results[1]["text_rrf_score"])
 
-    def test_normalized방식도_비교용으로_선택할수있다(self):
-        results = _combine_normalized_scores(
-            vector_rows=[row(1, vector_score=0.9), row(2, vector_score=0.5)],
-            text_rows=[row(2, text_score=10.0), row(3, text_score=5.0)],
-            vector_weight=0.7,
-            text_weight=0.3,
-            top_k=3,
-        )
-
-        self.assertEqual([1, 2, 3], [result["chunk_id"] for result in results])
-        self.assertAlmostEqual(0.7, results[0]["score"])
-        self.assertAlmostEqual(0.3, results[1]["score"])
-        self.assertAlmostEqual(0.15, results[2]["score"])
-
-    @mock.patch("rag.retriever._text_search")
-    @mock.patch("rag.retriever._vector_search")
-    def test_hybrid는_두_검색을_호출한다(self, vector_search, text_search):
+    @mock.patch("rag.retriever.embed_query", return_value=[1.0, 0.0, 0.0])
+    @mock.patch("rag.retriever.db.text_search")
+    @mock.patch("rag.retriever.db.vector_search")
+    def test_hybrid는_두_검색을_호출한다(self, vector_search, text_search, embed_query):
         vector_search.return_value = [row(1, vector_score=0.8)]
         text_search.return_value = [row(1, text_score=2.0)]
 
@@ -93,7 +75,8 @@ class HybridTest(unittest.TestCase):
 
         self.assertEqual(1, results[0]["chunk_id"])
         self.assertAlmostEqual(1 / 61, results[0]["score"])
-        vector_search.assert_called_once_with("query", 50, "cosine")
+        embed_query.assert_called_once_with("query")
+        vector_search.assert_called_once_with([1.0, 0.0, 0.0], 50)
         text_search.assert_called_once_with("query", 50)
 
     def test_잘못된_가중치를_거부한다(self):
@@ -125,13 +108,14 @@ class HybridTest(unittest.TestCase):
         self.assertTrue(results[0]["category_match"])
         self.assertEqual(["AI"], results[0]["matched_domains"])
 
-    @mock.patch("rag.retriever._vector_search")
-    def test_metadata_가산점이_있으면_vector_후보를_더_가져온다(self, vector_search):
+    @mock.patch("rag.retriever.embed_query", return_value=[1.0, 0.0, 0.0])
+    @mock.patch("rag.retriever.db.vector_search")
+    def test_metadata_가산점이_있으면_vector_후보를_더_가져온다(self, vector_search, _embed):
         vector_search.return_value = [row(1, vector_score=0.8)]
 
         retrieve("query", top_k=3, search_mode="vector", category="기술")
 
-        vector_search.assert_called_once_with("query", 50, "cosine")
+        vector_search.assert_called_once_with([1.0, 0.0, 0.0], 50)
 
     def test_metadata_가산점은_음수일수없다(self):
         with self.assertRaises(ValueError):

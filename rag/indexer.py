@@ -1,33 +1,41 @@
-"""기사 본문, BGE chunk/embedding, GLiNER2 4-Layer를 함께 저장한다."""
-import argparse
-import json
+"""indexing stage: 기사 본문을 chunk/embedding과 GLiNER2 4-Layer로 저장한다.
+
+`index_articles()`는 본문 수집부터 Event 저장까지 한 번에 처리하고, `index_events()`는
+이미 저장된 `article_chunks`만 재료로 Event만 다시 인덱싱한다. SQL은 모두 `db.py`에 있다.
+"""
+from __future__ import annotations
+
+import hashlib
 from collections.abc import Iterable
 
-from pgvector import Vector
-from pgvector.psycopg import register_vector
-
 from config import config
-from db.db import get_conn, init_db
-from tools.article_content import ArticleContentDependencyError, fetch_article_body
 
-from .chunk import build_article_text, load_embedding_tokenizer, split_text
+from . import db
+from .content import (
+    ArticleContentDependencyError,
+    build_article_text,
+    fetch_article_body,
+    load_embedding_tokenizer,
+    split_text,
+)
 from .embed import embed_texts
-from .event_extractor import GLiNER2EventExtractor, load_event_extractor
-from .event_indexer import index_event_articles
-from .topic_extractor import GLiNER2TopicExtractor
-from .topic_indexer import save_article_topics
+from .extract import (
+    GLiNER2EventExtractor,
+    GLiNER2TopicExtractor,
+    aggregate_event_candidates,
+    load_event_extractor,
+    load_gliner2_model,
+)
+from .taxonomy import (
+    EVENT_EXTRACTION_VERSION,
+    EVENT_TAXONOMY_VERSION,
+    GLINER2_MODEL_NAME,
+)
 
 
-def _load_articles(article_ids: list[int]) -> list[dict]:
-    with get_conn() as conn:
-        return conn.execute(
-            """SELECT id, title, description, url
-               FROM raw_articles
-               WHERE id = ANY(%s)
-               ORDER BY id""",
-            (article_ids,),
-        ).fetchall()
-
+# ---------------------------------------------------------------------------
+# 본문 + chunk/embedding + 4-Layer metadata
+# ---------------------------------------------------------------------------
 
 def _resolve_article_text(article: dict) -> tuple[str, str]:
     """URL 본문을 우선하고 어떤 수집 실패든 metadata fallback으로 격리한다."""
@@ -43,126 +51,26 @@ def _resolve_article_text(article: dict) -> tuple[str, str]:
     return text, text_source
 
 
-def _store_article(
-    article: dict,
-    chunks: list[dict],
-    vectors: list[list[float]],
-    text_source: str,
-    topics: dict,
-) -> dict:
-    with get_conn() as conn:
-        register_vector(conn)
-        existing_rows = conn.execute(
-            """SELECT id, chunk_index, chunk_text
-               FROM article_chunks
-               WHERE article_id = %s
-               ORDER BY chunk_index""",
-            (article["id"],),
-        ).fetchall()
-        existing_by_index = {row["chunk_index"]: row for row in existing_rows}
-        existing_signature = [
-            (row["chunk_index"], row["chunk_text"]) for row in existing_rows
-        ]
-        new_signature = [
-            (chunk["chunk_index"], chunk["chunk_text"]) for chunk in chunks
-        ]
-
-        if existing_signature != new_signature:
-            # Event와 argument는 이전 chunk text에서 파생된 값이므로 함께 무효화한다.
-            conn.execute(
-                "DELETE FROM article_event_index_status WHERE article_id = %s",
-                (article["id"],),
-            )
-            conn.execute(
-                "DELETE FROM article_events WHERE article_id = %s",
-                (article["id"],),
-            )
-
-        current_indexes: list[int] = []
-        for chunk, vector in zip(chunks, vectors, strict=True):
-            existing = existing_by_index.get(chunk["chunk_index"])
-            if existing is not None and existing["chunk_text"] != chunk["chunk_text"]:
-                # 같은 chunk_id의 다른 model embedding도 더 이상 유효하지 않다.
-                conn.execute(
-                    "DELETE FROM chunk_embeddings WHERE chunk_id = %s",
-                    (existing["id"],),
-                )
-
-            chunk_id = conn.execute(
-                """INSERT INTO article_chunks (article_id, chunk_index, chunk_text)
-                   VALUES (%s, %s, %s)
-                   ON CONFLICT (article_id, chunk_index) DO UPDATE SET
-                       chunk_text = EXCLUDED.chunk_text
-                   RETURNING id""",
-                (article["id"], chunk["chunk_index"], chunk["chunk_text"]),
-            ).fetchone()["id"]
-            current_indexes.append(chunk["chunk_index"])
-
-            conn.execute(
-                """INSERT INTO chunk_embeddings
-                       (chunk_id, embedding_model, embedding_dimension, embedding)
-                   VALUES (%s, %s, %s, %s)
-                   ON CONFLICT (chunk_id, embedding_model) DO UPDATE SET
-                       embedding_dimension = EXCLUDED.embedding_dimension,
-                       embedding = EXCLUDED.embedding,
-                       created_at = now()""",
-                (
-                    chunk_id,
-                    config.HF_EMBEDDING_MODEL,
-                    config.HF_EMBEDDING_DIMENSION,
-                    Vector(vector),
-                ),
-            )
-
-        conn.execute(
-            """DELETE FROM article_chunks
-               WHERE article_id = %s AND NOT (chunk_index = ANY(%s))""",
-            (article["id"], current_indexes),
-        )
-        save_article_topics(
-            article["id"],
-            topics["category"],
-            topics["domains"],
-            topics["entities"],
-            conn=conn,
-        )
-
-    return {
-        "article_id": article["id"],
-        "chunk_count": len(chunks),
-        "text_source": text_source,
-        "category": topics["category"],
-        "domains": topics["domains"],
-        "entities": topics["entities"],
-        "embedding_model": config.HF_EMBEDDING_MODEL,
-        "embedding_dimension": config.HF_EMBEDDING_DIMENSION,
-    }
-
-
 def index_articles(
     article_ids: Iterable[int],
     *,
     device: str = "cuda",
 ) -> list[dict]:
     """명시한 기사의 본문·4-Layer metadata·embedding을 함께 인덱싱한다."""
-    requested_ids = list(dict.fromkeys(int(article_id) for article_id in article_ids))
+    requested_ids = db.normalize_article_ids(article_ids)
     if not requested_ids:
         return []
 
-    articles = _load_articles(requested_ids)
-    found_ids = {article["id"] for article in articles}
-    missing_ids = [article_id for article_id in requested_ids if article_id not in found_ids]
-    if missing_ids:
-        raise ValueError(f"존재하지 않는 article_id: {missing_ids}")
+    articles = db.load_articles(requested_ids)
 
     tokenizer = load_embedding_tokenizer()
-    event_extractor = load_event_extractor(device)
-    topic_extractor = GLiNER2TopicExtractor(event_extractor.model)
+    model = load_gliner2_model(device)
+    topic_extractor = GLiNER2TopicExtractor(model)
     prepared: list[tuple[dict, list[dict], str, dict]] = []
     all_texts: list[str] = []
     for article in articles:
         text, text_source = _resolve_article_text(article)
-        chunks = split_text(text, tokenizer=tokenizer)
+        chunks = split_text(text, tokenizer)
         if not chunks:
             raise ValueError(f"article_id={article['id']}의 indexing 텍스트가 비어 있습니다.")
         topics = topic_extractor.extract(text)
@@ -174,20 +82,25 @@ def index_articles(
     offset = 0
     for article, chunks, text_source, topics in prepared:
         end = offset + len(chunks)
+        db.store_article_index(article["id"], chunks, all_vectors[offset:end], topics)
         results.append(
-            _store_article(
-                article,
-                chunks,
-                all_vectors[offset:end],
-                text_source,
-                topics,
-            )
+            {
+                "article_id": article["id"],
+                "chunk_count": len(chunks),
+                "text_source": text_source,
+                "category": topics["category"],
+                "domains": topics["domains"],
+                "entities": topics["entities"],
+                "embedding_model": config.HF_EMBEDDING_MODEL,
+                "embedding_dimension": config.HF_EMBEDDING_DIMENSION,
+            }
         )
         offset = end
-    event_results = index_event_articles(
+
+    event_results = index_events(
         [result["article_id"] for result in results],
         device=device,
-        extractor=GLiNER2EventExtractor(event_extractor.model),
+        extractor=GLiNER2EventExtractor(model),
     )
     events_by_article = {result["article_id"]: result for result in event_results}
     for result in results:
@@ -199,55 +112,117 @@ def index_articles(
     return results
 
 
-def index_article(article_id: int, *, device: str = "cuda") -> dict:
-    """기사 한 건의 URL 본문을 다시 읽어 인덱싱한다."""
-    return index_articles([article_id], device=device)[0]
-
-
 def index_all_articles(limit: int = 20, *, device: str = "cuda") -> list[dict]:
     """embedding이 없는 기사 중 제한된 수만 본문 수집과 인덱싱을 수행한다."""
     if limit <= 0:
         raise ValueError("limit은 1 이상이어야 합니다.")
-
-    with get_conn() as conn:
-        article_ids = [
-            row["id"]
-            for row in conn.execute(
-                """SELECT ra.id
-                   FROM raw_articles AS ra
-                   WHERE NOT EXISTS (
-                       SELECT 1
-                       FROM article_chunks AS ac
-                       JOIN chunk_embeddings AS ce ON ce.chunk_id = ac.id
-                       WHERE ac.article_id = ra.id
-                   )
-                   ORDER BY ra.id
-                   LIMIT %s""",
-                (limit,),
-            )
-        ]
-    return index_articles(article_ids, device=device)
+    return index_articles(db.load_unindexed_article_ids(limit), device=device)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="BrieFYI 기사 본문 RAG indexing worker")
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--article-ids", nargs="+", type=int)
-    group.add_argument("--limit", type=int)
-    parser.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
-    args = parser.parse_args(argv)
+# ---------------------------------------------------------------------------
+# 구조화 Event
+# ---------------------------------------------------------------------------
 
-    init_db()
-    if args.article_ids is not None:
-        results = index_articles(args.article_ids, device=args.device)
-    else:
-        results = index_all_articles(
-            args.limit if args.limit is not None else 20,
-            device=args.device,
+def _source_fingerprint(chunks: list[dict]) -> str:
+    digest = hashlib.sha256()
+    for chunk in chunks:
+        digest.update(str(chunk["id"]).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(str(chunk["chunk_index"]).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(chunk["chunk_text"].encode("utf-8"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _is_current(status: dict | None, source_fingerprint: str) -> bool:
+    return bool(
+        status
+        and status["status"] == "completed"
+        and status["extractor_model"] == GLINER2_MODEL_NAME
+        and status["taxonomy_version"] == EVENT_TAXONOMY_VERSION
+        and status["extraction_version"] == EVENT_EXTRACTION_VERSION
+        and status["source_fingerprint"] == source_fingerprint
+    )
+
+
+def index_events(
+    article_ids: Iterable[int],
+    *,
+    force: bool = False,
+    device: str = "cuda",
+    extractor=None,
+) -> list[dict]:
+    """명시한 기사들의 기존 chunk를 구조화 Event로 인덱싱한다."""
+    requested_ids = db.normalize_article_ids(article_ids)
+    if not requested_ids:
+        return []
+
+    articles = db.load_articles_with_chunks(requested_ids)
+    missing_chunk_ids = [
+        article["article_id"] for article in articles if not article["chunks"]
+    ]
+    if missing_chunk_ids:
+        raise ValueError(
+            "article_chunks가 없는 article_id: "
+            f"{missing_chunk_ids}. 먼저 rag.indexer.index_all_articles()를 실행해 주세요."
         )
-    print(json.dumps(results, ensure_ascii=False, indent=2, default=str))
-    return 0
 
+    statuses = db.load_event_statuses(requested_ids)
+    prepared = [
+        (article, _source_fingerprint(article["chunks"])) for article in articles
+    ]
+    pending = [
+        item
+        for item in prepared
+        if force or not _is_current(statuses.get(item[0]["article_id"]), item[1])
+    ]
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+    active_extractor = None
+    if pending:
+        active_extractor = extractor or load_event_extractor(device)
+    pending_ids = {article["article_id"] for article, _fingerprint in pending}
+    results: list[dict] = []
+
+    for article, source_fingerprint in prepared:
+        article_id = article["article_id"]
+        if article_id not in pending_ids:
+            results.append(
+                {
+                    "article_id": article_id,
+                    "title": article["title"],
+                    "status": "skipped",
+                    "event_count": statuses[article_id]["event_count"],
+                }
+            )
+            continue
+
+        try:
+            candidates: list[dict] = []
+            for chunk in article["chunks"]:
+                for event in active_extractor.extract(chunk["chunk_text"]):
+                    candidates.append({**event, "source_chunk_id": chunk["id"]})
+            events = aggregate_event_candidates(candidates)
+            db.replace_article_events(article_id, source_fingerprint, events)
+        except Exception as exc:  # 기사 하나의 실패가 다음 기사를 막지 않게 한다.
+            db.mark_event_failed(article_id, source_fingerprint, str(exc))
+            results.append(
+                {
+                    "article_id": article_id,
+                    "title": article["title"],
+                    "status": "failed",
+                    "event_count": 0,
+                    "error": str(exc),
+                }
+            )
+            continue
+
+        results.append(
+            {
+                "article_id": article_id,
+                "title": article["title"],
+                "status": "completed",
+                "event_count": len(events),
+            }
+        )
+    return results

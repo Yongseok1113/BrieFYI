@@ -1,7 +1,8 @@
-"""GLiNER2 relation 출력을 구조화 Event와 argument로 변환한다.
+"""GLiNER2로 기사 metadata(Category/Domain/Entity)와 구조화 Event를 추출한다.
 
-모델 import와 load는 함수 호출 시점까지 미룬다. 따라서 일반 RAG 실행과 unit test는
-GLiNER2, torch 또는 모델 다운로드를 요구하지 않는다.
+두 추출기는 같은 GLiNER2 model 하나를 공유하므로 한 파일에 둔다. 모델 import와 load는
+`load_gliner2_model()` 호출 시점까지 미루므로, 추출을 실제로 실행하지 않는 일반 RAG
+경로와 unit test는 GLiNER2, torch, 모델 다운로드를 요구하지 않는다.
 """
 from __future__ import annotations
 
@@ -10,16 +11,18 @@ import json
 import re
 from typing import Any
 
-from .event_taxonomy import (
+from .taxonomy import (
+    CATEGORY_LABELS,
+    DOMAIN_CLASSIFICATION_THRESHOLD,
+    DOMAIN_LABELS,
     ENTITY_TYPES,
-    EXTRACTION_VERSION,
+    GLINER2_MODEL_NAME,
+    MAX_ENTITIES,
     MAX_TOKENS_PER_WINDOW,
-    MODEL_NAME,
     OVERLAP_WORDS,
     RELATION_ROLES,
     RELATION_THRESHOLD,
     SYMMETRIC_RELATIONS,
-    TAXONOMY_VERSION,
 )
 
 KOREAN_PARTICLES = (
@@ -48,6 +51,10 @@ KOREAN_PARTICLES = (
     "에",
 )
 
+
+# ---------------------------------------------------------------------------
+# 공통: 텍스트 정규화와 window 분할
+# ---------------------------------------------------------------------------
 
 def normalize_argument_text(text: str) -> str:
     """공백과 흔한 한국어 조사를 정리하되 원문 text 자체는 별도로 보존한다."""
@@ -107,6 +114,10 @@ def split_text_windows(
 
     return windows
 
+
+# ---------------------------------------------------------------------------
+# 구조화 Event
+# ---------------------------------------------------------------------------
 
 def _entity_keys(result: dict) -> set[str]:
     keys: set[str] = set()
@@ -313,7 +324,116 @@ class GLiNER2EventExtractor:
         return aggregate_event_candidates(candidates)
 
 
-def load_event_extractor(device: str = "cuda") -> GLiNER2EventExtractor:
+# ---------------------------------------------------------------------------
+# Category / Domain / Entity
+# ---------------------------------------------------------------------------
+
+class GLiNER2TopicExtractor:
+    """로드된 GLiNER2 model을 재사용해 article-level metadata를 집계한다."""
+
+    def __init__(self, model: Any):
+        self.model = model
+        self.tokenizer = model.processor.tokenizer
+        self.schema = (
+            model.create_schema()
+            .entities(ENTITY_TYPES)
+            .classification("category", list(CATEGORY_LABELS))
+            .classification(
+                "domain",
+                list(DOMAIN_LABELS),
+                multi_label=True,
+                cls_threshold=DOMAIN_CLASSIFICATION_THRESHOLD,
+            )
+        )
+
+    def extract(self, text: str) -> dict:
+        """모든 GLiNER window 결과를 article-level metadata로 합친다."""
+        windows = split_text_windows(text, self.tokenizer)
+        if not windows:
+            raise ValueError("topic extraction 텍스트가 비어 있습니다.")
+
+        results = [
+            self.model.extract(window["text"], self.schema, include_confidence=True)
+            for window in windows
+        ]
+
+        categories = [
+            result.get("category")
+            for result in results
+            if isinstance(result.get("category"), dict)
+            and result["category"].get("label") in CATEGORY_LABELS
+        ]
+        best_category = (
+            max(categories, key=lambda item: float(item.get("confidence", 0.0)))["label"]
+            if categories
+            else "기타"
+        )
+
+        domain_scores: dict[str, float] = {}
+        for result in results:
+            domains = result.get("domain", [])
+            if isinstance(domains, dict):
+                domains = [domains]
+            if not isinstance(domains, list):
+                continue
+            for item in domains:
+                if not isinstance(item, dict) or item.get("label") not in DOMAIN_LABELS:
+                    continue
+                label = item["label"]
+                domain_scores[label] = max(
+                    domain_scores.get(label, 0.0),
+                    float(item.get("confidence", 0.0)),
+                )
+        if len(domain_scores) > 1:
+            domain_scores.pop("기타", None)
+        domains = [
+            label
+            for label, _score in sorted(
+                domain_scores.items(),
+                key=lambda item: (-item[1], DOMAIN_LABELS.index(item[0])),
+            )
+        ] or ["기타"]
+
+        entities: dict[str, tuple[str, float]] = {}
+        for result in results:
+            entity_groups = result.get("entities", {})
+            if not isinstance(entity_groups, dict):
+                continue
+            for items in entity_groups.values():
+                if isinstance(items, dict):
+                    items = [items]
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if not isinstance(item, dict) or not isinstance(item.get("text"), str):
+                        continue
+                    text = normalize_argument_text(item["text"])
+                    if not text:
+                        continue
+                    key = text.casefold()
+                    confidence = float(item.get("confidence", 0.0))
+                    if key not in entities or confidence > entities[key][1]:
+                        entities[key] = (text, confidence)
+        top_entities = [
+            text
+            for text, _confidence in sorted(
+                entities.values(),
+                key=lambda item: (-item[1], item[0].casefold()),
+            )[:MAX_ENTITIES]
+        ]
+
+        return {
+            "category": best_category,
+            "domains": domains,
+            "entities": top_entities,
+        }
+
+
+# ---------------------------------------------------------------------------
+# 모델 load
+# ---------------------------------------------------------------------------
+
+def load_gliner2_model(device: str = "cuda") -> Any:
     """요청한 device에 GLiNER2를 load한다. CUDA 요청을 CPU로 자동 전환하지 않는다."""
     if device not in {"cuda", "cpu"}:
         raise ValueError("device는 'cuda' 또는 'cpu'여야 합니다.")
@@ -323,25 +443,28 @@ def load_event_extractor(device: str = "cuda") -> GLiNER2EventExtractor:
         from gliner2 import GLiNER2
     except ImportError as exc:
         raise RuntimeError(
-            "GLiNER2 Event 실행 의존성이 없습니다. "
+            "GLiNER2 실행 의존성이 없습니다. "
             "rag/requirements-event.txt를 local 환경에 설치해 주세요."
         ) from exc
 
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA를 요청했지만 현재 PyTorch에서 CUDA를 사용할 수 없습니다.")
 
-    model = GLiNER2.from_pretrained(MODEL_NAME, map_location=device)
-    return GLiNER2EventExtractor(model)
+    return GLiNER2.from_pretrained(GLINER2_MODEL_NAME, map_location=device)
+
+
+def load_event_extractor(device: str = "cuda") -> GLiNER2EventExtractor:
+    """Event만 단독으로 인덱싱할 때 쓰는 편의 loader."""
+    return GLiNER2EventExtractor(load_gliner2_model(device))
 
 
 __all__ = [
-    "EXTRACTION_VERSION",
-    "MODEL_NAME",
-    "TAXONOMY_VERSION",
     "GLiNER2EventExtractor",
+    "GLiNER2TopicExtractor",
     "aggregate_event_candidates",
     "event_candidates_from_result",
     "load_event_extractor",
+    "load_gliner2_model",
     "normalize_argument_text",
     "split_text_windows",
 ]
