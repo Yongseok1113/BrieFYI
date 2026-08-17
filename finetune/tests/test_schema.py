@@ -55,3 +55,25 @@ def test_example_roundtrip(summarize_example):
 def test_non_dict_raises():
     with pytest.raises(SchemaError):
         validate_example("not a dict")  # type: ignore[arg-type]
+
+
+def test_valid_enrich_example_passes(enrich_example):
+    validate_example(enrich_example)
+
+
+def test_enrich_missing_category_raises(enrich_example):
+    del enrich_example["output"]["category"]
+    with pytest.raises(SchemaError):
+        validate_example(enrich_example)
+
+
+def test_enrich_domain_must_be_list(enrich_example):
+    enrich_example["output"]["domain"] = "반도체"  # 배열이어야 하는데 문자열
+    with pytest.raises(SchemaError):
+        validate_example(enrich_example)
+
+
+def test_enrich_reuses_insight_count_check(enrich_example):
+    enrich_example["output"]["insights"] = enrich_example["output"]["insights"][:2]
+    with pytest.raises(SchemaError):
+        validate_example(enrich_example)

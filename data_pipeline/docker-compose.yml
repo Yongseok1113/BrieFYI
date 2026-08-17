@@ -1,0 +1,31 @@
+# data_pipeline 자체 컴포즈 파일. 이 폴더만으로 이미지를 빌드하고 띄울 수 있다
+# (레포 루트 docker-compose.yml/db/를 import하지 않음, design doc 8절).
+#
+# 먼저 레포 루트에서 메인 앱의 Postgres를 띄워둔다:
+#   cd .. && docker compose up -d db
+# 그때 만들어지는 기본 네트워크 이름은 폴더명(BrieFYI) 기준 "briefyi_default"다.
+# `docker network ls`로 실제 이름을 확인하고 다르면 아래 networks.briefyi_shared.name을 바꿔라.
+#
+# 실행:
+#   docker compose run --rm data_pipeline run --stage all --limit 20
+#   docker compose run --rm data_pipeline synonyms build
+
+services:
+  data_pipeline:
+    build:
+      context: .
+    image: briefyi-data-pipeline:latest
+    env_file:
+      # .env는 레포 루트 하나로 통합 관리한다 (data_pipeline/에는 별도 .env를 두지 않음).
+      - ../.env
+    environment:
+      # 컨테이너 안에서는 host가 localhost가 아니라 서비스명(db)이다. env_file의
+      # DATABASE_URL보다 이 값이 우선한다.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-briefyi}:${POSTGRES_PASSWORD:-briefyi}@db:5432/${POSTGRES_DB:-briefyi}
+    networks:
+      - briefyi_shared
+
+networks:
+  briefyi_shared:
+    external: true
+    name: briefyi_default

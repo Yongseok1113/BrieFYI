@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-TaskName = Literal["summarize", "insight"]
+TaskName = Literal["summarize", "insight", "enrich"]
 
 _ID_RE = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
@@ -104,16 +104,20 @@ class Example:
 
 
 _REQUIRED_TOP_LEVEL = ("id", "task", "source", "input", "output")
-_VALID_TASKS = ("summarize", "insight")
+_VALID_TASKS = ("summarize", "insight", "enrich")
 
 _REQUIRED_INPUT_FIELDS = {
     "summarize": ("article_title", "article_text"),
     "insight": ("summaries",),
+    # data_pipeline/의 변형2+변형3 산출물 (기사 1건 -> insights+분류 메타데이터).
+    # digests 기반 insight task와 달리 summaries 묶음이 아니라 기사 1건을 입력으로 받는다.
+    "enrich": ("article_title", "article_text"),
 }
 
 _REQUIRED_OUTPUT_FIELDS = {
     "summarize": ("topic_title", "summary"),
     "insight": ("insights",),
+    "enrich": ("insights", "category", "domain", "entity", "event"),
 }
 
 
@@ -154,7 +158,7 @@ def validate_example(d: dict, *, strict_id: bool = False) -> None:
     if missing_output:
         raise SchemaError(f"task={task} output 필수 필드 누락: {missing_output}")
 
-    if task == "insight":
+    if task in ("insight", "enrich"):
         insights = output.get("insights")
         if not isinstance(insights, list) or not (3 <= len(insights) <= 5):
             raise SchemaError(
@@ -164,3 +168,10 @@ def validate_example(d: dict, *, strict_id: bool = False) -> None:
         for item in insights:
             if not isinstance(item, dict) or "source_url" not in item:
                 raise SchemaError("각 insight 항목에는 source_url이 있어야 함")
+
+    if task == "enrich":
+        for field_name in ("domain", "entity", "event"):
+            if not isinstance(output.get(field_name), list):
+                raise SchemaError(f"enrich task의 {field_name}은 배열이어야 함")
+        if not isinstance(output.get("category"), str) or not output["category"]:
+            raise SchemaError("enrich task의 category는 비어있지 않은 문자열이어야 함")

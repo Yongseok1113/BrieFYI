@@ -1,0 +1,20 @@
+# DB
+psycopg[binary]>=3.1
+python-dotenv>=1.0
+
+# 수집
+requests>=2.31
+
+# LLM (기본 hf, 선택 anthropic)
+huggingface_hub>=0.25
+anthropic>=0.34
+
+# 키워드/클러스터링 (로컬, API 호출 아님)
+keybert>=0.8
+sentence-transformers>=3.0
+
+# 변형3 정규화
+rapidfuzz>=3.9
+
+# 테스트
+pytest>=8.0

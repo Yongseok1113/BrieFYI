@@ -65,6 +65,33 @@ def summarize_example() -> dict:
 
 
 @pytest.fixture
+def enrich_example() -> dict:
+    return {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "task": "enrich",
+        "source": "data_pipeline",
+        "input": {
+            "article_title": "삼성전자, AI 반도체 투자 확대",
+            "article_text": "제목: 삼성전자, AI 반도체 투자 확대\n설명: 삼성전자가 AI 반도체 생산 라인에 대규모 투자를 발표했다.",
+            "prompt_template": "enrich_v1",
+        },
+        "output": {
+            "insights": [
+                {"text": "인사이트1", "source_url": "https://example.com/1"},
+                {"text": "인사이트2", "source_url": "https://example.com/2"},
+                {"text": "인사이트3", "source_url": "https://example.com/3"},
+            ],
+            "implications": ["시사점1"],
+            "category": "기술",
+            "domain": ["반도체", "AI"],
+            "entity": ["삼성전자"],
+            "event": ["투자"],
+        },
+        "meta": {"created_at": "2026-01-01T00:00:00Z", "teacher_model": "Qwen/Qwen3-8B-Instruct", "quality_flag": "unverified"},
+    }
+
+
+@pytest.fixture
 def insight_example() -> dict:
     return {
         "id": "22222222-2222-4222-8222-222222222222",

@@ -45,10 +45,19 @@ def _load_dacon(dacon_csv: str) -> list[dict]:
     return load_csv(dacon_csv)
 
 
+def _load_enrichment(min_id: int | None) -> list[dict]:
+    from summarize_ft.sources.enrichment_export import export_examples
+
+    return export_examples(min_id=min_id)
+
+
 SOURCE_LOADERS = {
     "digest_pipeline": _load_digest_pipeline,
     "aihub": _load_aihub,
     "dacon": _load_dacon,
+    # data_pipeline/(프롬프트 엔지니어링 학습 데이터 생성 파이프라인)의 변형3 결과.
+    # docs/data-pipeline-design.md 9절 참고.
+    "enrichment": _load_enrichment,
 }
 
 
@@ -84,6 +93,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--min-date", default=None, help="digest_pipeline 소스에서 이 날짜 이후만 export")
     parser.add_argument("--aihub-dir", default=None)
     parser.add_argument("--dacon-csv", default=None)
+    parser.add_argument("--min-id", type=int, default=None, help="enrichment 소스에서 이 raw_article id 이상만 export")
     parser.add_argument("--out-dir", default="finetune/data/processed")
     parser.add_argument("--val-ratio", type=float, default=0.1)
     return parser.parse_args(argv)
@@ -104,6 +114,8 @@ def main(argv: list[str] | None = None) -> None:
             if not args.dacon_csv:
                 raise SystemExit("--sources dacon을 쓰려면 --dacon-csv가 필요합니다")
             all_examples.extend(_load_dacon(args.dacon_csv))
+        elif source == "enrichment":
+            all_examples.extend(_load_enrichment(args.min_id))
 
     print(f"소스별 로드 후 총 {len(all_examples)}건")
 

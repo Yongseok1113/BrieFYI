@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: data-pipeline
+Version: 0.1.0
+Summary: BrieFYI 프롬프트 엔지니어링 기반 학습 데이터 생성 파이프라인
+Requires-Python: >=3.11
