@@ -1,22 +1,20 @@
-"""기사 제목과 설명에서 4-Layer의 Entity/Event metadata를 추출한다."""
+"""기사 제목과 설명에서 prototype용 Entity metadata를 추출한다."""
 import json
 
 from .llm_client import call_llm, parse_json_response
 
 
 SYSTEM_PROMPT = """당신은 뉴스 기사 metadata 분류기다.
-기사에서 핵심적으로 다뤄지는 Entity와 Event만 추출한다.
+기사에서 핵심적으로 다뤄지는 Entity만 추출한다.
 
 - entities: 회사, 기관, 인물, 제품 등의 고유명사. 최대 3개.
-- events: 핵심 사건이나 행동을 나타내는 짧은 명사구. 최대 2개.
 - 기사에 근거하지 않은 항목을 만들지 않는다.
 - 적절한 항목이 없으면 빈 배열을 사용한다.
 - 반드시 아래 JSON 객체만 반환한다. 다른 설명은 붙이지 않는다.
 
 ```json
 {
-  "entities": ["NVIDIA", "OpenAI"],
-  "events": ["투자"]
+  "entities": ["NVIDIA", "OpenAI"]
 }
 ```
 """
@@ -34,7 +32,7 @@ def _normalize_items(payload: dict, key: str, max_items: int) -> list[str]:
 
 
 def extract_article_topics(title: str, description: str | None) -> dict[str, list[str]]:
-    """기사 한 건에서 Entity 최대 3개와 Event 최대 2개를 추출한다."""
+    """기사 한 건에서 prototype용 Entity를 최대 3개 추출한다."""
     title = title.strip()
     description = (description or "").strip()
     if not title:
@@ -56,5 +54,4 @@ def extract_article_topics(title: str, description: str | None) -> dict[str, lis
 
     return {
         "entities": _normalize_items(parsed, "entities", max_items=3),
-        "events": _normalize_items(parsed, "events", max_items=2),
     }

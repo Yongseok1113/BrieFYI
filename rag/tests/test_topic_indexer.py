@@ -14,31 +14,29 @@ from tools.topic_extract import extract_article_topics
 class TopicExtractTest(unittest.TestCase):
     @mock.patch(
         "tools.topic_extract.call_llm",
-        return_value='{"entities": [" NVIDIA ", "OpenAI", "NVIDIA"], "events": [" 투자 "]}',
+        return_value='{"entities": [" NVIDIA ", "OpenAI", "NVIDIA"]}',
     )
     def test_JSON_응답을_정리한다(self, call_llm):
         result = extract_article_topics("AI 투자 기사", None)
 
         self.assertEqual(["NVIDIA", "OpenAI"], result["entities"])
-        self.assertEqual(["투자"], result["events"])
         self.assertEqual(500, call_llm.call_args.kwargs["max_tokens"])
 
     @mock.patch(
         "tools.topic_extract.call_llm",
-        return_value='```json\n{"entities": [], "events": ["제품 출시"]}\n```',
+        return_value='```json\n{"entities": ["신제품"]}\n```',
     )
     def test_JSON_코드블록을_파싱한다(self, _call_llm):
         result = extract_article_topics("신제품 기사", "제품을 출시했다.")
 
-        self.assertEqual({"entities": [], "events": ["제품 출시"]}, result)
+        self.assertEqual({"entities": ["신제품"]}, result)
 
     def test_잘못된_응답_구조를_거부한다(self):
         responses = (
             '["NVIDIA"]',
-            '{"entities": "NVIDIA", "events": []}',
-            '{"entities": [], "events": [1]}',
-            '{"entities": ["A", "B", "C", "D"], "events": []}',
-            '{"entities": [], "events": ["A", "B", "C"]}',
+            '{"entities": "NVIDIA"}',
+            '{"entities": [1]}',
+            '{"entities": ["A", "B", "C", "D"]}',
         )
         for response in responses:
             with self.subTest(response=response), mock.patch(
@@ -62,7 +60,6 @@ class TopicIndexerTest(unittest.TestCase):
         ]
         extract_article_topics_mock.return_value = {
             "entities": ["OpenAI"],
-            "events": ["제품 출시"],
         }
 
         results = index_article_topics([7, 3, 7], " 기술 ", [" AI ", "AI"])
@@ -88,17 +85,18 @@ class TopicIndexerTest(unittest.TestCase):
         extract_article_topics_mock.assert_not_called()
 
     @mock.patch("rag.topic_indexer.get_conn")
-    def test_UPSERT는_네_metadata_컬럼만_갱신한다(self, get_conn):
+    def test_UPSERT는_Category_Domain_Entity만_갱신한다(self, get_conn):
         conn = get_conn.return_value.__enter__.return_value
 
-        save_article_topics(19, "기술", ["AI"], ["Anthropic"], ["제품 출시"])
+        save_article_topics(19, "기술", ["AI"], ["Anthropic"])
 
         sql, params = conn.execute.call_args.args
         update_clause = sql.split("DO UPDATE SET", maxsplit=1)[1]
         self.assertNotIn("topic_text", update_clause)
         self.assertNotIn("embedding", update_clause)
+        self.assertNotIn("events", update_clause)
         self.assertEqual(
-            (19, "기술", ["AI"], ["Anthropic"], ["제품 출시"]),
+            (19, "기술", ["AI"], ["Anthropic"]),
             params,
         )
 
@@ -118,7 +116,7 @@ class TopicIndexerDbTest(DbTestCase):
                 ),
             ).fetchone()["id"]
 
-        save_article_topics(article_id, "기술", ["AI"], ["OpenAI"], ["투자"])
+        save_article_topics(article_id, "기술", ["AI"], ["OpenAI"])
         with get_conn() as conn:
             register_vector(conn)
             conn.execute(
@@ -133,11 +131,10 @@ class TopicIndexerDbTest(DbTestCase):
             "경제",
             ["반도체"],
             ["NVIDIA"],
-            ["실적 발표"],
         )
         with get_conn() as conn:
             row = conn.execute(
-                """SELECT category, domains, entities, events, topic_text,
+                """SELECT category, domains, entities, topic_text,
                           vector_dims(embedding) AS embedding_dimension
                    FROM article_topics
                    WHERE article_id = %s""",
@@ -147,7 +144,6 @@ class TopicIndexerDbTest(DbTestCase):
         self.assertEqual("경제", row["category"])
         self.assertEqual(["반도체"], row["domains"])
         self.assertEqual(["NVIDIA"], row["entities"])
-        self.assertEqual(["실적 발표"], row["events"])
         self.assertEqual("기술 | AI | OpenAI | 투자", row["topic_text"])
         self.assertEqual(1024, row["embedding_dimension"])
 

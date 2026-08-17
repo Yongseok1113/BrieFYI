@@ -14,6 +14,9 @@ DB 계약을 먼저 검증한 뒤, 향후 뉴스 agent가 호출하는 Tool로 `
 | `chunk.py` | 기사 제목과 description을 결합하고 chunk 목록 생성 |
 | `embed.py` | Hugging Face Inference API로 BGE-M3 dense embedding 생성 |
 | `indexer.py` | 현재 `raw_articles`를 청킹·임베딩해 PostgreSQL에 저장 |
+| `event_taxonomy.py` | AI·기술 relation 10개와 role mapping, 추출 version |
+| `event_extractor.py` | GLiNER2 relation 추출과 false-positive 후처리 |
+| `event_indexer.py` | 기존 article chunk의 구조화 Event/Argument 저장 |
 | `retriever.py` | vector, text, normalized hybrid, RRF hybrid 검색 |
 | `rag_function_test.ipynb` | DB 확인부터 인덱싱·검색까지 단계별 기능 테스트 |
 
@@ -35,7 +38,7 @@ raw_articles(title, description)
 
 ## 설정과 실행 조건
 
-프로젝트 루트의 `.env`에는 embedding과 4-Layer 추출에 사용할 API 키가 필요하다.
+프로젝트 루트의 `.env`에는 embedding과 prototype Entity 추출에 사용할 API 키가 필요하다.
 
 ```dotenv
 HF_TOKEN="your_huggingface_token"
@@ -54,6 +57,13 @@ ANTHROPIC_API_KEY="your_anthropic_api_key"
 프로젝트 `requirements.txt`에 포함되어 있다. DB는 pgvector 확장이 설치된
 PostgreSQL 16이어야 한다.
 
+구조화 Event는 local worker용 별도 의존성을 사용하며 공유 `requirements.txt`에는
+포함하지 않는다.
+
+```bash
+pip install -r rag/requirements-event.txt
+```
+
 ```bash
 docker compose up -d db
 ```
@@ -68,6 +78,10 @@ docker compose up -d db
 
 ```text
 raw_articles 1 --- N article_chunks 1 --- N chunk_embeddings
+     |                  |
+     |                  +--- N article_events 1 --- N article_event_arguments
+     |
+     +--- 1 article_event_index_status
 ```
 
 `article_chunks`는 `(article_id, chunk_index)`, `chunk_embeddings`는
@@ -85,7 +99,7 @@ raw_articles 1 --- N article_chunks 1 --- N chunk_embeddings
 ```text
 외부 입력: Category / Domain
                     + 기사 제목 / description
-                              -> Anthropic Entity / Event 추출
+                              -> Anthropic Entity 추출
                               -> article_topics UPSERT
 
 raw_articles 1 --- 1 article_topics
@@ -96,7 +110,9 @@ raw_articles 1 --- 1 article_topics
 - `category`: 기술, 경제 같은 대분류
 - `domains`: AI, 반도체 같은 세부 도메인
 - `entities`: 기사에서 핵심적으로 다루는 회사·기관·인물·제품, 최대 3개
-- `events`: 핵심 사건·행동을 나타내는 짧은 명사구, 최대 2개
+
+기존 `article_topics.events` free-text prototype은 더 이상 생성하거나 갱신하지 않는다.
+기존 DB에 남아 있는 컬럼과 데이터는 자동 삭제하지 않는다.
 
 `topic_text`와 topic `embedding`은 후속 실험용 컬럼이며 현재는 NULL로 둔다. 기존
 기사의 chunk embedding은 다시 만들지 않고 그대로 연결해서 사용한다.
@@ -112,8 +128,55 @@ python -m rag.topic_indexer \
 
 여러 Domain을 전달할 때는 `--domain`을 반복한다. CLI는 `init_db()`로 스키마를 먼저
 확인하고, 지정한 ID가 하나라도 없으면 Anthropic API를 호출하기 전에 중단한다.
-Category/Domain 검색 필터, Entity/Event boost, 전체 기사 백필, Collector와 pipeline
+Category/Domain 검색 필터, Entity boost, 전체 기사 백필, Collector와 pipeline
 연결은 이 prototype에 포함하지 않는다.
+
+## 구조화 Event indexing
+
+Event는 자유 명사구가 아니라 고정 relation과 role별 argument로 저장한다.
+
+```text
+invested_in
+  investor: NVIDIA
+  investee: OpenAI
+```
+
+1차 taxonomy는 `ai_tech_v1`의 10개 relation이며, 추출 설정과 후처리 version은
+`gliner2_event_v1`이다. GLiNER2가 같은 argument 쌍에 여러 relation을 반환하면 confidence가
+가장 높은 하나만 남긴다. 양쪽 argument가 같은 window에서 추출된 Entity와 일치하지 않거나,
+정규화 후 head와 tail이 같으면 저장하지 않는다. `partnered_with`만 대칭 relation으로
+처리한다.
+
+GLiNER2 1.3.2 `multi-v1`에서는 Entity와 Relation을 한 schema에 함께 넣었을 때 relation은
+나오지만 Entity가 빈 결과가 되는 사례가 확인됐다. 따라서 같은 window에 Entity schema와
+Relation schema를 각각 실행하고, 두 결과를 합쳐 argument-Entity 일치 여부를 검사한다.
+
+먼저 누락된 RAG chunk/embedding을 만든 뒤 원하는 article ID만 local에서 실행한다.
+
+```bash
+python -c "from rag.indexer import index_all_articles; print(index_all_articles())"
+
+python -m rag.event_indexer \
+  --article-ids 19 20 21 \
+  --device cuda
+```
+
+`--device cuda`에서 CUDA를 사용할 수 없으면 CPU로 자동 전환하지 않고 실패한다. CPU를
+의도했다면 `--device cpu`를 사용한다. 같은 chunk와 model/taxonomy/extraction version으로
+완료한 기사는 건너뛰며, 다시 처리하려면 `--force`를 추가한다. Event가 없는 기사도
+`completed`, `event_count=0`으로 기록한다.
+
+Event indexer는 `raw_articles.pipeline_status`나 별도 `develop/data_pipeline`의
+`enrichment.event`에 의존하지 않는다. Event embedding, Event 검색, Entity FK 연결,
+pipeline/Agent Tool은 후속 범위다.
+
+### 현재 model smoke test 한계
+
+캐시된 `fastino/gliner2-multi-v1`을 CPU에서 6개 짧은 예문으로 확인했다. 투자, 인수,
+협력은 각각 `invested_in`, `acquired`, `partnered_with`로 남았고, 날씨와 일반 시장 발언
+예문은 Event가 없었다. 다만 `OpenAI released the GPT-X model.`은 `released`가 아니라
+`developed`로 선택됐고, 협력 예문에는 추가 `developed` 후보도 남았다. 따라서 현재 결과는
+구조와 실행 계약을 확인한 baseline이며, relation별 의미 정확도가 검증됐다는 뜻은 아니다.
 
 ## 청킹과 Embedding
 
@@ -280,6 +343,8 @@ python -m unittest \
   rag.tests.test_embed \
   rag.tests.test_indexer \
   rag.tests.test_topic_indexer \
+  rag.tests.test_event_extractor \
+  rag.tests.test_event_indexer \
   rag.tests.test_retriever \
   rag.tests.test_db
 ```
@@ -291,7 +356,9 @@ python -m unittest \
 - vector/text 검색 SQL
 - weighted RRF, 동점 dense rank, normalized 비교 방식
 - 재인덱싱 unique key와 DB FK/차원 제약
-- Entity/Event JSON 검증과 article_topics UPSERT/FK CASCADE
+- Entity JSON 검증과 article_topics UPSERT/FK CASCADE
+- 구조화 Event taxonomy, span 복원, Entity 일치, relation 경쟁과 중복 제거
+- Event/Argument/Status 저장, 0-event 완료, 재처리와 FK CASCADE
 
 테스트의 HF 호출은 mock이며 실제 API 품질이나 네트워크 상태를 검증하지 않는다.
 DB 통합 테스트는 `https://test.invalid/` 접두사의 임시 기사만 만들고 종료 시

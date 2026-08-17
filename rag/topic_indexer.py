@@ -1,4 +1,4 @@
-"""기존 기사에 4-Layer metadata를 추출하고 article_topics에 저장한다."""
+"""기존 기사에 Category/Domain/Entity prototype metadata를 저장한다."""
 import argparse
 import json
 from collections.abc import Iterable
@@ -36,20 +36,18 @@ def save_article_topics(
     category: str,
     domains: list[str],
     entities: list[str],
-    events: list[str],
 ) -> None:
-    """기사의 네 metadata 컬럼만 article_id 기준으로 UPSERT한다."""
+    """기사의 Category/Domain/Entity만 article_id 기준으로 UPSERT한다."""
     with get_conn() as conn:
         conn.execute(
             """INSERT INTO article_topics
-                   (article_id, category, domains, entities, events)
-               VALUES (%s, %s, %s, %s, %s)
+                   (article_id, category, domains, entities)
+               VALUES (%s, %s, %s, %s)
                ON CONFLICT (article_id) DO UPDATE SET
                    category = EXCLUDED.category,
                    domains = EXCLUDED.domains,
-                   entities = EXCLUDED.entities,
-                   events = EXCLUDED.events""",
-            (article_id, category, domains, entities, events),
+                   entities = EXCLUDED.entities""",
+            (article_id, category, domains, entities),
         )
 
 
@@ -58,7 +56,7 @@ def index_article_topics(
     category: str,
     domains: Iterable[str],
 ) -> list[dict]:
-    """명시된 기존 기사에 외부 Category/Domain과 추출한 Entity/Event를 저장한다."""
+    """명시된 기존 기사에 외부 Category/Domain과 추출한 Entity를 저장한다."""
     requested_ids = list(dict.fromkeys(int(article_id) for article_id in article_ids))
     if not requested_ids:
         return []
@@ -79,7 +77,6 @@ def index_article_topics(
                 category=category,
                 domains=normalized_domains,
                 entities=extracted["entities"],
-                events=extracted["events"],
             )
         except Exception as exc:
             raise RuntimeError(
@@ -93,7 +90,6 @@ def index_article_topics(
                 "category": category,
                 "domains": normalized_domains,
                 "entities": extracted["entities"],
-                "events": extracted["events"],
             }
         )
     return results
