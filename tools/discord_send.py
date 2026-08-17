@@ -1,12 +1,7 @@
 """Discord Webhook 발송 도구 (백로그 #9).
 
-Webhook URL로 POST 한 번이면 끝이라 봇 토큰이나 상시 연결(gateway)이 필요 없다.
-다만 이메일이 Jinja2로 HTML을 만드는 것과 달리 Discord는 embed(JSON) 구조를 쓰므로,
-같은 인사이트 JSON을 embed로 옮기는 format_discord를 이 모듈에 함께 뒀다.
-포맷이 커지면 email_format.py처럼 tools/discord_format.py로 떼어내면 된다.
+서버별 Webhook URL로 POST 한 번이면 끝이긴 한데...배포 차원에서는 장기적으로 봇을 만드는게 낫긴 한듯 
 
-주의: DISCORD_WEBHOOK_URL의 마지막 경로 조각은 토큰(=비밀)이다. 로그·DB·예외 메시지
-어디에도 URL 원문을 남기지 않는다. 발송 이력에는 webhook_label()이 만든 ID만 기록한다.
 """
 import requests
 
