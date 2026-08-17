@@ -3,13 +3,21 @@ import unittest
 from unittest import mock
 
 from rag.retriever import (
+    _apply_metadata_boost,
     _combine_normalized_scores,
     _combine_rrf_scores,
     retrieve,
 )
 
 
-def row(chunk_id, vector_score=None, text_score=None):
+def row(
+    chunk_id,
+    vector_score=None,
+    text_score=None,
+    *,
+    category=None,
+    domains=None,
+):
     value = {
         "article_id": chunk_id,
         "chunk_id": chunk_id,
@@ -17,6 +25,9 @@ def row(chunk_id, vector_score=None, text_score=None):
         "text": f"chunk {chunk_id}",
         "title": f"title {chunk_id}",
         "url": f"https://example.com/{chunk_id}",
+        "category": category,
+        "domains": domains or [],
+        "entities": [],
     }
     if vector_score is not None:
         value["vector_score"] = vector_score
@@ -92,6 +103,39 @@ class HybridTest(unittest.TestCase):
     def test_candidate_k는_top_k보다_작을수없다(self):
         with self.assertRaises(ValueError):
             retrieve("query", top_k=5, search_mode="hybrid", candidate_k=4)
+
+    def test_Category_Domain_일치는_후보를_제거하지_않고_가산점을_준다(self):
+        rows = [
+            {**row(1, category="경제", domains=["증시"]), "score": 1.0},
+            {**row(2, category="기술", domains=["AI"]), "score": 0.96},
+        ]
+
+        results = _apply_metadata_boost(
+            rows,
+            category="기술",
+            domains=["AI"],
+            category_boost=0.05,
+            domain_boost=0.05,
+            top_k=2,
+        )
+
+        self.assertEqual([2, 1], [result["chunk_id"] for result in results])
+        self.assertAlmostEqual(0.96, results[0]["base_score"])
+        self.assertAlmostEqual(0.1, results[0]["metadata_score"])
+        self.assertTrue(results[0]["category_match"])
+        self.assertEqual(["AI"], results[0]["matched_domains"])
+
+    @mock.patch("rag.retriever._vector_search")
+    def test_metadata_가산점이_있으면_vector_후보를_더_가져온다(self, vector_search):
+        vector_search.return_value = [row(1, vector_score=0.8)]
+
+        retrieve("query", top_k=3, search_mode="vector", category="기술")
+
+        vector_search.assert_called_once_with("query", 50, "cosine")
+
+    def test_metadata_가산점은_음수일수없다(self):
+        with self.assertRaises(ValueError):
+            retrieve("query", category="기술", category_boost=-0.1)
 
 
 if __name__ == "__main__":

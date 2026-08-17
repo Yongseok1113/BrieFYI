@@ -7,6 +7,7 @@ from pgvector.psycopg import register_vector
 
 from db.db import get_conn
 from rag.retriever import retrieve
+from rag.topic_indexer import save_article_topics
 from tests.dbhelpers import TEST_URL_PREFIX, DbTestCase, requires_db
 
 
@@ -32,6 +33,16 @@ class RagSearchDbTest(DbTestCase):
                 description="Investors discuss expensive AI stocks.",
                 vector=[0.0, 1.0, 0.0],
             )
+            self.gym_article_id = conn.execute(
+                "SELECT article_id FROM article_chunks WHERE id = %s",
+                (self.gym_chunk_id,),
+            ).fetchone()["article_id"]
+            self.stock_article_id = conn.execute(
+                "SELECT article_id FROM article_chunks WHERE id = %s",
+                (self.stock_chunk_id,),
+            ).fetchone()["article_id"]
+        save_article_topics(self.gym_article_id, "기술", ["AI"], ["Agent"])
+        save_article_topics(self.stock_article_id, "경제", ["증시"], ["Investor"])
 
     def _insert_chunk(self, conn, suffix, title, description, vector):
         article_id = conn.execute(
@@ -83,6 +94,23 @@ class RagSearchDbTest(DbTestCase):
         self.assertEqual(self.gym_chunk_id, rows[1]["chunk_id"])
         self.assertEqual(1, rows[0]["text_rank"])
         self.assertGreater(rows[0]["score"], rows[1]["score"])
+
+    @mock.patch("rag.retriever.config.HF_EMBEDDING_DIMENSION", 3)
+    @mock.patch("rag.retriever.config.HF_EMBEDDING_MODEL", MODEL)
+    @mock.patch("rag.retriever.embed_query", return_value=[0.71, 0.70, 0.0])
+    def test_Category_Domain_가산점이_비슷한_vector_후보를_재정렬한다(self, _embed_query):
+        rows = retrieve(
+            "market AI",
+            top_k=2,
+            search_mode="vector",
+            category="경제",
+            domains=["증시"],
+        )
+
+        self.assertEqual(self.stock_chunk_id, rows[0]["chunk_id"])
+        self.assertTrue(rows[0]["category_match"])
+        self.assertEqual(["증시"], rows[0]["matched_domains"])
+        self.assertGreater(rows[0]["metadata_score"], 0)
 
 
 if __name__ == "__main__":

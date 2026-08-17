@@ -59,6 +59,29 @@ def _event(confidence=0.9, *, source_chunk_id=None):
 
 
 class EventIndexerTest(unittest.TestCase):
+    @mock.patch("rag.event_indexer._replace_article_events")
+    @mock.patch("rag.event_indexer.load_event_extractor")
+    @mock.patch("rag.event_indexer._load_statuses", return_value={})
+    @mock.patch("rag.event_indexer._load_articles_with_chunks")
+    def test_주입된_extractor를_재사용해_model을_다시_load하지_않는다(
+        self,
+        load_articles,
+        _load_statuses,
+        load_model,
+        replace_events,
+    ):
+        article = _article(3)
+        load_articles.return_value = [article]
+        extractor = mock.Mock()
+        extractor.extract.return_value = []
+
+        result = index_event_articles([3], device="cpu", extractor=extractor)
+
+        self.assertEqual("completed", result[0]["status"])
+        load_model.assert_not_called()
+        extractor.extract.assert_called_once_with(article["chunks"][0]["chunk_text"])
+        replace_events.assert_called_once()
+
     @mock.patch("rag.event_indexer.load_event_extractor")
     @mock.patch("rag.event_indexer._load_statuses")
     @mock.patch("rag.event_indexer._load_articles_with_chunks")

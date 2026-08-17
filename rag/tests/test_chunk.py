@@ -20,6 +20,12 @@ class ChunkTest(unittest.TestCase):
     def test_title과_description을_결합한다(self):
         self.assertEqual("제목\n\n설명", build_article_text(" 제목 ", " 설명 "))
 
+    def test_본문이_있으면_description_대신_사용한다(self):
+        self.assertEqual(
+            "제목\n\n실제 본문",
+            build_article_text("제목", "짧은 설명", " 실제 본문 "),
+        )
+
     def test_tokenizer가_없으면_기사_전체가_한_청크다(self):
         self.assertEqual(
             [{"chunk_index": 0, "chunk_text": "one two three"}],
@@ -39,6 +45,14 @@ class ChunkTest(unittest.TestCase):
     def test_overlap은_chunk_size보다_작아야_한다(self):
         with self.assertRaises(ValueError):
             split_text("text", tokenizer=OffsetTokenizer(), chunk_size=2, overlap=2)
+
+    def test_기본값은_500_token과_50_token_overlap이다(self):
+        tokens = [f"t{i}" for i in range(600)]
+        chunks = split_text(" ".join(tokens), tokenizer=OffsetTokenizer())
+        chunk_tokens = [chunk["chunk_text"].split() for chunk in chunks]
+
+        self.assertEqual([500, 150], [len(items) for items in chunk_tokens])
+        self.assertEqual(chunk_tokens[0][-50:], chunk_tokens[1][:50])
 
 
 if __name__ == "__main__":

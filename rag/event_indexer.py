@@ -183,6 +183,7 @@ def index_event_articles(
     *,
     force: bool = False,
     device: str = "cuda",
+    extractor=None,
 ) -> list[dict]:
     """명시한 기사들의 기존 chunk를 구조화 Event로 인덱싱한다."""
     requested_ids = list(dict.fromkeys(int(article_id) for article_id in article_ids))
@@ -214,7 +215,7 @@ def index_event_articles(
         if force or not _is_current(statuses.get(item[0]["article_id"]), item[1])
     ]
 
-    extractor = load_event_extractor(device) if pending else None
+    active_extractor = extractor or load_event_extractor(device) if pending else None
     pending_ids = {article["article_id"] for article, _fingerprint in pending}
     results: list[dict] = []
 
@@ -234,7 +235,7 @@ def index_event_articles(
         try:
             candidates: list[dict] = []
             for chunk in article["chunks"]:
-                for event in extractor.extract(chunk["chunk_text"]):
+                for event in active_extractor.extract(chunk["chunk_text"]):
                     candidates.append({**event, "source_chunk_id": chunk["id"]})
             events = aggregate_event_candidates(candidates)
             _replace_article_events(article_id, source_fingerprint, events)

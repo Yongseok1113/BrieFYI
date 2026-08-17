@@ -36,10 +36,12 @@ def save_article_topics(
     category: str,
     domains: list[str],
     entities: list[str],
+    *,
+    conn=None,
 ) -> None:
     """기사의 Category/Domain/Entity만 article_id 기준으로 UPSERT한다."""
-    with get_conn() as conn:
-        conn.execute(
+    def execute(target_conn):
+        target_conn.execute(
             """INSERT INTO article_topics
                    (article_id, category, domains, entities)
                VALUES (%s, %s, %s, %s)
@@ -49,6 +51,12 @@ def save_article_topics(
                    entities = EXCLUDED.entities""",
             (article_id, category, domains, entities),
         )
+
+    if conn is not None:
+        execute(conn)
+        return
+    with get_conn() as managed_conn:
+        execute(managed_conn)
 
 
 def index_article_topics(

@@ -1,6 +1,7 @@
 """vector, text, weighted RRF hybrid 검색."""
 import argparse
 import json
+from collections.abc import Iterable
 from typing import Literal
 
 from pgvector import Vector
@@ -48,10 +49,14 @@ def _vector_search(query: str, limit: int, metric: Metric) -> list[dict]:
                 ac.chunk_text AS text,
                 ra.title,
                 ra.url,
+                at.category,
+                at.domains,
+                at.entities,
                 ce.embedding {operator} %(query_vector)s AS distance
             FROM chunk_embeddings AS ce
             JOIN article_chunks AS ac ON ac.id = ce.chunk_id
             JOIN raw_articles AS ra ON ra.id = ac.article_id
+            LEFT JOIN article_topics AS at ON at.article_id = ra.id
             WHERE ce.embedding_model = %(embedding_model)s
               AND ce.embedding_dimension = %(embedding_dimension)s
         )
@@ -86,12 +91,16 @@ def _text_search(query: str, limit: int) -> list[dict]:
                    ac.chunk_text AS text,
                    ra.title,
                    ra.url,
+                   at.category,
+                   at.domains,
+                   at.entities,
                    ts_rank_cd(
                        to_tsvector('simple', ac.chunk_text),
                        query.value
                    ) AS text_score
                FROM article_chunks AS ac
                JOIN raw_articles AS ra ON ra.id = ac.article_id
+               LEFT JOIN article_topics AS at ON at.article_id = ra.id
                CROSS JOIN query
                WHERE to_tsvector('simple', ac.chunk_text) @@ query.value
                ORDER BY text_score DESC
@@ -137,8 +146,22 @@ def _merge_candidates(vector_rows: list[dict], text_rows: list[dict]) -> dict[in
         if chunk_id not in merged:
             merged[chunk_id] = {
                 key: row[key]
-                for key in ("article_id", "chunk_id", "chunk_index", "text", "title", "url")
+                for key in (
+                    "article_id",
+                    "chunk_id",
+                    "chunk_index",
+                    "text",
+                    "title",
+                    "url",
+                )
             }
+            merged[chunk_id].update(
+                {
+                    "category": row.get("category"),
+                    "domains": row.get("domains") or [],
+                    "entities": row.get("entities") or [],
+                }
+            )
         if row.get("vector_score") is not None:
             merged[chunk_id]["vector_score"] = float(row["vector_score"])
         if row.get("text_score") is not None:
@@ -216,6 +239,60 @@ def _combine_rrf_scores(
     )[:top_k]
 
 
+def _normalize_metadata_query(
+    category: str | None,
+    domains: Iterable[str] | None,
+) -> tuple[str | None, list[str]]:
+    normalized_category = category.strip() if category and category.strip() else None
+    normalized_domains = list(
+        dict.fromkeys(domain.strip() for domain in (domains or []) if domain.strip())
+    )
+    return normalized_category, normalized_domains
+
+
+def _apply_metadata_boost(
+    rows: list[dict],
+    *,
+    category: str | None,
+    domains: list[str],
+    category_boost: float,
+    domain_boost: float,
+    top_k: int,
+) -> list[dict]:
+    """후보를 제거하지 않고 Category/Domain 일치에 score-scale 비례 가산점을 준다."""
+    if category_boost < 0 or domain_boost < 0:
+        raise ValueError("metadata boost는 0 이상이어야 합니다.")
+    if not rows:
+        return []
+
+    scores = [float(row["score"]) for row in rows]
+    score_scale = max(max(scores) - min(scores), abs(max(scores)), 1e-12)
+    boosted: list[dict] = []
+    for row in rows:
+        article_domains = list(row.get("domains") or [])
+        category_match = category is not None and row.get("category") == category
+        matched_domains = [domain for domain in domains if domain in article_domains]
+        domain_match_fraction = len(matched_domains) / len(domains) if domains else 0.0
+        metadata_score = score_scale * (
+            category_boost * int(category_match)
+            + domain_boost * domain_match_fraction
+        )
+        boosted.append(
+            {
+                **row,
+                "base_score": float(row["score"]),
+                "metadata_score": metadata_score,
+                "category_match": category_match,
+                "matched_domains": matched_domains,
+                "score": float(row["score"]) + metadata_score,
+            }
+        )
+    return sorted(
+        boosted,
+        key=lambda row: (-row["score"], row["chunk_id"]),
+    )[:top_k]
+
+
 def retrieve(
     query: str,
     top_k: int = 10,
@@ -226,18 +303,44 @@ def retrieve(
     fusion_method: FusionMethod = "rrf",
     candidate_k: int | None = None,
     rrf_k: int = 60,
+    category: str | None = None,
+    domains: Iterable[str] | None = None,
+    category_boost: float = 0.05,
+    domain_boost: float = 0.05,
 ) -> list[dict]:
-    """문자열 query를 받아 vector, text 또는 hybrid 검색을 수행한다."""
+    """검색 후 Category/Domain 일치 후보에 가산점을 적용한다."""
     query = _validate_common(query, top_k)
+    category, normalized_domains = _normalize_metadata_query(category, domains)
+    if category_boost < 0 or domain_boost < 0:
+        raise ValueError("metadata boost는 0 이상이어야 합니다.")
+    use_metadata_boost = category is not None or bool(normalized_domains)
     if search_mode not in {"vector", "text", "hybrid"}:
         raise ValueError(f"지원하지 않는 search_mode: {search_mode}")
 
     if search_mode == "vector":
-        rows = _vector_search(query, top_k, metric)
-        return [{**row, "score": float(row["vector_score"])} for row in rows]
+        limit = max(top_k * 10, 50) if use_metadata_boost else top_k
+        rows = _vector_search(query, limit, metric)
+        scored = [{**row, "score": float(row["vector_score"])} for row in rows]
+        return _apply_metadata_boost(
+            scored,
+            category=category,
+            domains=normalized_domains,
+            category_boost=category_boost,
+            domain_boost=domain_boost,
+            top_k=top_k,
+        )
     if search_mode == "text":
-        rows = _text_search(query, top_k)
-        return [{**row, "score": float(row["text_score"])} for row in rows]
+        limit = max(top_k * 10, 50) if use_metadata_boost else top_k
+        rows = _text_search(query, limit)
+        scored = [{**row, "score": float(row["text_score"])} for row in rows]
+        return _apply_metadata_boost(
+            scored,
+            category=category,
+            domains=normalized_domains,
+            category_boost=category_boost,
+            domain_boost=domain_boost,
+            top_k=top_k,
+        )
 
     if fusion_method not in {"rrf", "normalized"}:
         raise ValueError(f"지원하지 않는 fusion_method: {fusion_method}")
@@ -250,12 +353,22 @@ def retrieve(
     candidate_limit = candidate_k if candidate_k is not None else max(top_k * 10, 50)
     vector_rows = _vector_search(query, candidate_limit, metric)
     text_rows = _text_search(query, candidate_limit)
+    merge_limit = candidate_limit if use_metadata_boost else top_k
     if fusion_method == "normalized":
-        return _combine_normalized_scores(
-            vector_rows, text_rows, vector_weight, text_weight, top_k
+        scored = _combine_normalized_scores(
+            vector_rows, text_rows, vector_weight, text_weight, merge_limit
         )
-    return _combine_rrf_scores(
-        vector_rows, text_rows, vector_weight, text_weight, top_k, rrf_k
+    else:
+        scored = _combine_rrf_scores(
+            vector_rows, text_rows, vector_weight, text_weight, merge_limit, rrf_k
+        )
+    return _apply_metadata_boost(
+        scored,
+        category=category,
+        domains=normalized_domains,
+        category_boost=category_boost,
+        domain_boost=domain_boost,
+        top_k=top_k,
     )
 
 
@@ -272,6 +385,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fusion", choices=("rrf", "normalized"), default="rrf")
     parser.add_argument("--candidate-k", type=int)
     parser.add_argument("--rrf-k", type=int, default=60)
+    parser.add_argument("--category")
+    parser.add_argument("--domain", dest="domains", action="append")
+    parser.add_argument("--category-boost", type=float, default=0.05)
+    parser.add_argument("--domain-boost", type=float, default=0.05)
     args = parser.parse_args(argv)
 
     query = args.query if args.query is not None else input("검색어를 입력하세요: ")
@@ -285,6 +402,10 @@ def main(argv: list[str] | None = None) -> int:
         fusion_method=args.fusion,
         candidate_k=args.candidate_k,
         rrf_k=args.rrf_k,
+        category=args.category,
+        domains=args.domains,
+        category_boost=args.category_boost,
+        domain_boost=args.domain_boost,
     )
     print(json.dumps(rows, ensure_ascii=False, indent=2, default=str))
     return 0
