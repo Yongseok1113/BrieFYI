@@ -8,7 +8,7 @@ lora:
   alpha: 32
   dropout: 0.05
 train:
-  learning_rate: 2e-4
+  learning_rate: 2.0e-4
   epochs: 3
   effective_batch_size: 16
   max_seq_len: 1024
