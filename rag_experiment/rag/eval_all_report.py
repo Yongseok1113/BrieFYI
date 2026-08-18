@@ -1,15 +1,9 @@
 """
 RAG 검색 성능 평가 - 최종 통합 리포트
 
-지금까지 따로 돌렸던 두 종류의 평가를 하나로 합친다.
-
-    파트 A: 정답을 미리 아는 가짜 기사 10개 질문 테스트
-            (필터 없이 vs 권장 검색, 소수점 점수)
-
-    파트 B: DB에 이미 저장된 "진짜 SBS 기사"들로
-            self-retrieval MRR 테스트
-            (RSS를 새로 안 불러오고, 이미 저장된 진짜 기사들의
-             제목으로 검색해서 자기 자신을 찾아내는지 확인)
+파트 A: 정답을 아는 가짜 기사 10개 질문 테스트 (필터 없이 vs 권장 검색)
+파트 B: DB에 있는 진짜 SBS 기사 전체로 self-retrieval 평가
+        (본문이 너무 짧은 크롤링 실패 기사는 제외, 점수 낮은 순 정렬)
 """
 
 import psycopg2
@@ -24,16 +18,6 @@ from rag.db_config import DB_CONFIG
 # ==========================================
 
 def reciprocal_rank_score(results: list, key: str, expected_value: str) -> float:
-    """
-    검색 결과 리스트 안에서 정답을 찾아 Reciprocal Rank(1/순위) 점수로 변환한다.
-
-    key: 정답을 비교할 기준 필드 이름.
-         가짜 기사 테스트는 "title"로 비교하고,
-         진짜 SBS 기사 테스트는 "source_url"로 비교한다.
-         (진짜 기사는 같은 기사가 chunk 여러 개로 쪼개져 있어서
-          제목만으로 비교하면 완전히 똑같은 제목이 여러 줄 나와
-          헷갈릴 수 있어, URL로 비교하는 게 더 정확하다)
-    """
 
     values = [r.get(key) for r in results]
 
@@ -66,7 +50,7 @@ def count_eval_documents() -> int:
     try:
         cur.execute(
             "SELECT COUNT(*) FROM rag_documents "
-            "WHERE source_url LIKE 'https://example.com/eval/%'"
+            "WHERE source_url LIKE 'https://example.com/eval/%%'"
         )
         return cur.fetchone()[0]
 
@@ -75,14 +59,10 @@ def count_eval_documents() -> int:
         conn.close()
 
 
-def get_existing_sbs_articles() -> list:
+def get_all_sbs_articles(min_content_length=100) -> list:
     """
-    RSS를 새로 안 불러오고, DB에 이미 저장돼 있는
-    진짜 SBS 기사들의 (제목, source_url) 목록을 가져온다.
-
-    DISTINCT를 쓰는 이유:
-        기사 1개가 chunk 여러 개로 쪼개져 저장돼 있으므로,
-        같은 source_url이 여러 줄 나오는 걸 하나로 합친다.
+    본문이 min_content_length자 이상인 진짜 SBS 기사만 가져온다.
+    (영상/카드뉴스형 콘텐츠 등 크롤링 실패로 본문이 너무 짧은 것은 제외)
     """
 
     conn = psycopg2.connect(**DB_CONFIG)
@@ -91,10 +71,13 @@ def get_existing_sbs_articles() -> list:
     try:
         cur.execute(
             """
-            SELECT DISTINCT title, source_url
+            SELECT title, source_url, SUM(LENGTH(content)) as total_len
             FROM rag_documents
-            WHERE source_url LIKE 'https://news.sbs.co.kr%'
-            """
+            WHERE source_url LIKE 'https://news.sbs.co.kr%%'
+            GROUP BY title, source_url
+            HAVING SUM(LENGTH(content)) >= %s
+            """,
+            (min_content_length,)
         )
 
         return [
@@ -140,61 +123,65 @@ def run_part_a(total_docs: int):
         recommended_results = retrieve_documents(query=query, top_k=5, **filters)
         recommended_score = reciprocal_rank_score(recommended_results, "title", expected_title)
 
-        rows.append(
-            {
-                "query": query,
-                "without_score": without_score,
-                "recommended_score": recommended_score,
-            }
-        )
+        rows.append({
+            "query": query,
+            "without_score": without_score,
+            "recommended_score": recommended_score,
+        })
 
-        print(
-            f"  {query} -> 필터 없이: {without_score:.3f}, "
-            f"권장 검색: {recommended_score:.3f}"
-        )
+        print(f"  {query} -> 필터 없이: {without_score:.3f}, 권장 검색: {recommended_score:.3f}")
 
     return rows
 
 
 # ==========================================
-# 파트 B: 진짜 SBS 기사 self-retrieval 테스트
+# 파트 B: 진짜 SBS 기사 self-retrieval (대규모, 정렬된 표)
 # ==========================================
 
-def run_part_b():
+def run_part_b(min_content_length=100):
 
     print("\n" + "-" * 70)
-    print("파트 B: 실제 SBS 기사 self-retrieval (DB에 이미 저장된 것 전부)")
+    print("파트 B: 실제 SBS 기사 self-retrieval (본문 짧은 기사 제외)")
     print("-" * 70)
 
-    articles = get_existing_sbs_articles()
+    articles = get_all_sbs_articles(min_content_length=min_content_length)
 
-    if not articles:
-        print("  DB에 저장된 SBS 기사가 없습니다.")
-        return []
+    total = len(articles)
+
+    if total == 0:
+        print("  평가할 SBS 기사가 없습니다.")
+        return [], total
 
     rows = []
 
-    for article in articles:
+    for index, article in enumerate(articles, start=1):
 
         title = article["title"]
         url = article["source_url"]
 
         results = retrieve_documents(query=title, top_k=20)
 
-        score = reciprocal_rank_score(results, "source_url", url)
+        values = [r.get("source_url") for r in results]
+        rank = values.index(url) + 1 if url in values else None
 
-        rows.append({"title": title, "score": score})
+        score = (1 / rank) if rank else 0.0
 
-        print(f"  {title} -> {score:.3f}")
+        rows.append({"title": title, "rank": rank, "score": score})
 
-    return rows
+        # 원본(eval_large_scale.py)처럼 기사마다 즉시 결과 출력
+        rank_display = f"{rank}위" if rank else "20위 밖"
+        print(f"[{index}/{total}] {title} -> {rank_display} (점수: {score:.3f})")
+
+    rows.sort(key=lambda r: r["score"])
+
+    return rows, total
 
 
 # ==========================================
 # 최종 통합 실행
 # ==========================================
 
-def run_all():
+def run_all(min_content_length=100):
 
     ensure_eval_data_seeded()
 
@@ -203,20 +190,25 @@ def run_all():
     print("=" * 70)
     print("검색 성능 최종 통합 리포트")
     print("=" * 70)
-    print(f"\n전체 검색 대상: {total_docs}개 chunk")
+    print(f"\n전체 DB 문서(chunk) 수: {total_docs}개")
 
     part_a_rows = run_part_a(total_docs)
-    part_b_rows = run_part_b()
+    part_b_rows, part_b_total = run_part_b(min_content_length=min_content_length)
 
     avg_a_without = sum(r["without_score"] for r in part_a_rows) / len(part_a_rows)
     avg_a_recommended = sum(r["recommended_score"] for r in part_a_rows) / len(part_a_rows)
-    avg_b = (
-        sum(r["score"] for r in part_b_rows) / len(part_b_rows)
-        if part_b_rows else 0.0
-    )
+
+    if part_b_total > 0:
+        hit_at_5 = sum(1 for r in part_b_rows if r["rank"] and r["rank"] <= 5)
+        hit_at_10 = sum(1 for r in part_b_rows if r["rank"] and r["rank"] <= 10)
+        recall_at_5 = hit_at_5 / part_b_total
+        recall_at_10 = hit_at_10 / part_b_total
+        mrr_b = sum(r["score"] for r in part_b_rows) / part_b_total
+    else:
+        recall_at_5 = recall_at_10 = mrr_b = 0.0
 
     print("\n" + "=" * 70)
-    print("표")
+    print("팀 공유용 최종 표")
     print("=" * 70)
 
     print("\n[파트 A] 정답을 아는 테스트 질문 10개")
@@ -224,23 +216,23 @@ def run_all():
     print("---|---|---")
     for row in part_a_rows:
         print(f"{row['query']} | {row['without_score']:.3f} | {row['recommended_score']:.3f}")
-
     print(f"\n[파트 A 평균] 필터 없이: {avg_a_without:.3f} / 권장 검색: {avg_a_recommended:.3f}")
 
-    print(f"\n[파트 B] 실제 SBS 기사 {len(part_b_rows)}개 self-retrieval")
-    print("기사 제목 | 점수")
-    print("---|---")
+    print(f"\n[파트 B] 실제 SBS 기사 {part_b_total}개 self-retrieval (점수 낮은 순)")
+    print("기사 제목 | 순위 | 점수")
+    print("---|---|---")
     for row in part_b_rows:
-        print(f"{row['title']} | {row['score']:.3f}")
-
-    print(f"\n[파트 B 평균 = MRR] {avg_b:.3f}")
+        rank_display = f"{row['rank']}위" if row["rank"] else "못 찾음"
+        print(f"{row['title']} | {rank_display} | {row['score']:.3f}")
 
     print("\n" + "=" * 70)
-    print("최종 요약 (3개 숫자)")
+    print("최종 요약")
     print("=" * 70)
-    print(f"1. 가짜 기사 테스트 - 필터 없이:  {avg_a_without:.3f}")
-    print(f"2. 가짜 기사 테스트 - 권장 검색:  {avg_a_recommended:.3f}")
-    print(f"3. 실제 SBS 기사 - Self-Retrieval MRR: {avg_b:.3f}")
+    print(f"1. [파트 A] 가짜 기사 - 필터 없이:  {avg_a_without:.3f}")
+    print(f"2. [파트 A] 가짜 기사 - 권장 검색:  {avg_a_recommended:.3f}")
+    print(f"3. [파트 B] 실제 SBS 기사 {part_b_total}개 - Recall@5:  {recall_at_5:.3f}")
+    print(f"4. [파트 B] 실제 SBS 기사 {part_b_total}개 - Recall@10: {recall_at_10:.3f}")
+    print(f"5. [파트 B] 실제 SBS 기사 {part_b_total}개 - MRR:       {mrr_b:.3f}")
 
 
 if __name__ == "__main__":

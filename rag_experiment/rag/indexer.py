@@ -3,13 +3,6 @@ RAG Indexer
 
 기사 chunk를 임베딩하고
 PostgreSQL + pgvector에 저장한다.
-
-[변경사항]
-기존에는 title, content, source_url, embedding만 저장했는데,
-이번에 category, domain, entities, event
-4개 컬럼을 추가로 저장하도록 확장했다.
-이 4개 값은 rag/classify.py가 미리 판단해서 넘겨준다.
-(이 파일은 "저장"만 담당, "판단"은 classify.py가 담당 — 역할 분리)
 """
 
 from typing import List, Dict
@@ -55,8 +48,6 @@ def index_chunks(
     source_url: str,
     chunks: List[str],
     # --------------------------------------
-    # 여기 4개가 새로 추가된 파라미터.
-    #
     # = None 이 붙어있는 이유:
     #   "기본값이 None"이라는 뜻. 즉 이 4개를 안 넘겨도
     #   함수 호출 자체는 에러 없이 동작한다.
@@ -120,7 +111,6 @@ def index_chunks(
             # entities는 파이썬 리스트(예: ["엔비디아"])를
             # 그대로 넘기면 psycopg2가 알아서
             # Postgres의 TEXT[] 배열 타입으로 변환해준다.
-            # (별도로 문자열로 합치거나 하는 처리 필요 없음)
             cur.execute(
                 """
                 INSERT INTO rag_documents
@@ -178,7 +168,6 @@ def index_chunks(
 # ==========================================
 # 4. 테스트용 조회
 # ==========================================
-# 기존과 동일 (안 바뀜)
 
 def get_document_count() -> int:
     """
@@ -227,10 +216,10 @@ if __name__ == "__main__":
     ]
 
     # --------------------------------------
-    # 이번 테스트에서는 category/domain/entities/event를
+    # 테스트는 category/domain/entities/event를
     # 직접 값으로 넣어서 테스트한다.
     # (실제 파이프라인에서는 sbs_to_rag.py가
-    #  classify.py 결과를 여기 넣어주게 될 것 — 다음 파일에서 연결)
+    #  classify.py 결과를 여기 넣어주게 될 것)
     print("\nChunk 임베딩 및 DB 저장 중 (metadata 포함)...")
 
     saved = index_chunks(

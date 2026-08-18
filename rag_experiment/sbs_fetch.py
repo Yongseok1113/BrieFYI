@@ -7,7 +7,7 @@ import feedparser
 # 1. SBS RSS 주소
 # ==========================================
 
-RSS_URL = "https://news.sbs.co.kr/news/SectionRssFeed.do?section=01"
+RSS_URL = "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=01&plink=RSSREADER"
 
 
 # ==========================================
@@ -29,6 +29,50 @@ def fetch_sbs_rss(max_results=5):
         })
 
     return articles
+
+
+# ==========================================
+# 2-1. 여러 섹션 한 번에 가져오기 (대규모 기사 수집을 위한)
+# ==========================================
+
+SBS_SECTIONS = {
+    "01": "정치",
+    "02": "경제",
+    "03": "사회",
+    "07": "국제",
+    "08": "생활문화",
+    "09": "스포츠",
+    "14": "연예",
+}
+
+
+def fetch_sbs_rss_multi(max_results_per_section=30):
+    """
+    SBS의 여러 섹션 RSS를 전부 가져와서 하나로 합친다.
+    """
+
+    all_articles = []
+
+    for section_code, section_name in SBS_SECTIONS.items():
+
+        url = f"https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId={section_code}&plink=RSSREADER"
+
+        feed = feedparser.parse(url)
+
+        print(f"  {section_name}(sectionId={section_code}): {len(feed.entries)}개")
+
+        for entry in feed.entries[:max_results_per_section]:
+
+            all_articles.append(
+                {
+                    "title": entry.get("title", ""),
+                    "url": entry.get("link", ""),
+                    "published_at": entry.get("published", ""),
+                    "section": section_name,
+                }
+            )
+
+    return all_articles
 
 
 # ==========================================
@@ -60,32 +104,21 @@ def fetch_sbs_article(url):
         "html.parser"
     )
 
-    # 페이지 전체에서 script/style 제거
     for tag in soup(["script", "style", "noscript"]):
         tag.decompose()
 
-    # SBS 기사 본문 후보
-    article = soup.select_one(
-        ".text_area"
-    )
+    article = soup.select_one(".text_area")
 
     if article is None:
-        article = soup.select_one(
-            "#newsContent"
-        )
+        article = soup.select_one("#newsContent")
 
     if article is None:
-        article = soup.select_one(
-            ".main_text"
-        )
+        article = soup.select_one(".main_text")
 
     if article is None:
         return ""
 
-    text = article.get_text(
-        "\n",
-        strip=True
-    )
+    text = article.get_text("\n", strip=True)
 
     return text
 
@@ -112,9 +145,7 @@ if __name__ == "__main__":
 
         try:
 
-            content = fetch_sbs_article(
-                article["url"]
-            )
+            content = fetch_sbs_article(article["url"])
 
             print(f"\n원문 길이: {len(content)}자")
 
