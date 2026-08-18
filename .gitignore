@@ -9,3 +9,5 @@ __pycache__/
 target_adress.json
 test_email.html
 test_text.json
+
+.worktrees/
