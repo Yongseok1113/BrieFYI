@@ -118,7 +118,18 @@ class ConnectTest(unittest.TestCase):
             ).fetchall()
 
         self.assertEqual(
-            {"raw_articles", "digests", "send_log", "article_chunks", "chunk_embeddings"},
+            {
+                "raw_articles",
+                "digests",
+                "send_log",
+                # db/vector_schema.sql (RAG)
+                "article_chunks",
+                "chunk_embeddings",
+                "article_topics",
+                "article_events",
+                "article_event_arguments",
+                "article_event_index_status",
+            },
             {r["table_name"] for r in rows},
         )
 

@@ -4,6 +4,7 @@ data
 */**/*.Identifier
 __pycache__/
 **/__pycache__/
+*/**/__pycache__
 *.pyc
 target_adress.json
 test_email.html

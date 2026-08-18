@@ -1,0 +1,2 @@
+# Local GLiNER2 Event worker 전용. 공유 requirements.txt에는 포함하지 않는다.
+gliner2[local]==1.3.2

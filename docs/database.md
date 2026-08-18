@@ -70,9 +70,9 @@ User `briefyi`, Password `briefyi`(또는 `.env`에 설정한 값)로 접속한�
 `CREATE TABLE IF NOT EXISTS`로 한 번 더 확인한다.
 
 ```
-raw_articles (수집 원문)        digests (요약·인사이트) 1 ──< send_log (발송 이력)
-        │                                                        ON DELETE CASCADE
-        └─ 직접적인 FK 관계는 없다. digest_date/keyword로 논리적으로 연결된다.
+raw_articles 1 ──< article_chunks 1 ──< chunk_embeddings
+
+digests 1 ──< send_log
 ```
 
 ### `raw_articles` — 수집된 기사 원문 (구현 항목 #2)
@@ -122,13 +122,40 @@ raw_articles (수집 원문)        digests (요약·인사이트) 1 ──< sen
 제약·인덱스: `send_log_pkey(id)`, `send_log_digest_id_fkey → digests(id) ON DELETE CASCADE`,
 `send_log_digest_id_idx(digest_id)`.
 
+### `article_chunks` - 청킹된 기사 
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | `bigserial` | PK |
+| `article_id` | `bigint` | `raw_articles(id)` FK, ON DELETE CASCADE |
+| `chunk_index` | `integer` | 기사 내부 chunk 순서, 0 이상 |
+| `chunk_text` | `text` | embedding과 검색에 사용하는 텍스트 |
+
+제약: `UNIQUE(article_id, chunk_index)`
+
+### `chunk_embeddings` - 청크별 임베딩 
+
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| `id` | `bigserial` | PK |
+| `chunk_id` | `bigint` | `article_chunks(id)` FK, ON DELETE CASCADE |
+| `embedding_model` | `text` | embedding 생성 모델 |
+| `embedding_dimension` | `integer` | 선언된 vector 차원 |
+| `embedding` | `vector` | pgvector embedding |
+| `created_at` | `timestamptz` | 저장·갱신 시각 |
+
+제약:
+
+- `UNIQUE(chunk_id, embedding_model)`
+- `embedding_dimension > 0`
+- `vector_dims(embedding) = embedding_dimension`
+
 ## 4. 코드에서의 접근
 
 모든 DB 접근은 `db/db.py`만 통과한다(psycopg 3, `row_factory=dict_row`).
 
 | 함수 | 동작 |
 | --- | --- |
-| `init_db()` | `schema.sql` 적용 (idempotent) |
+| `init_db()` | `schema.sql`, `vector_schema.sql` 순서대로 적용 (idempotent) |
 | `get_conn()` | 커넥션 컨텍스트 매니저. 정상 종료 시 커밋, 예외 시 롤백 |
 | `insert_articles(digest_date, articles) -> int` | `ON CONFLICT (url) DO NOTHING`으로 저장, 신규 건수 반환 |
 | `save_digest(digest_date, keyword, summary, insight) -> int` | `RETURNING id`로 새 digest id 반환 |
@@ -162,6 +189,34 @@ FROM digests ORDER BY id DESC LIMIT 5;
 SELECT digest_id, recipient, error, sent_at FROM send_log WHERE status <> 'success' ORDER BY sent_at DESC;
 ```
 
+```sql
+-- RAG 저장 건수
+SELECT
+    (SELECT count(*) FROM article_chunks) AS chunks,
+    (SELECT count(*) FROM chunk_embeddings) AS embeddings;
+
+-- 모델별 embedding
+SELECT
+    embedding_model,
+    embedding_dimension,
+    count(*) AS rows,
+    avg(vector_norm(embedding)) AS average_l2_norm
+FROM chunk_embeddings
+GROUP BY embedding_model, embedding_dimension;
+
+-- embedding 저장 상세
+SELECT
+    id,
+    chunk_id,
+    embedding_model,
+    embedding_dimension,
+    vector_dims(embedding) AS actual_dimension,
+    vector_norm(embedding) AS l2_norm
+FROM chunk_embeddings
+ORDER BY id
+LIMIT 10;
+```
+
 ## 6. 테스트
 
 DB가 떠 있어야 하며, 접속할 수 없으면 자동 skip된다. 테스트가 만든 행은 tearDown에서 지운다
@@ -171,6 +226,7 @@ DB가 떠 있어야 하며, 접속할 수 없으면 자동 skip된다. 테스트
 python -m unittest tests.test_db_connection   # 접속 (URL 조립, 실접속, 인코딩, 실패 케이스)
 python -m unittest tests.test_db_crud         # 테이블별 CRUD, 제약, CASCADE, 트랜잭션
 python -m unittest tests.test_db              # db.py 헬퍼 함수
+python -m unittest rag.tests.test_db
 ```
 
 ## 7. 트러블슈팅
@@ -182,3 +238,5 @@ python -m unittest tests.test_db              # db.py 헬퍼 함수
 | `password authentication failed` | `.env`의 비밀번호를 바꿨는데 볼륨은 옛 비밀번호로 초기화된 상태. 계정 정보는 최초 기동 시에만 반영되므로 `db-up.ps1 -Reset -Force`로 볼륨을 다시 만들거나 `ALTER USER`로 변경 |
 | 스키마를 바꿨는데 반영 안 됨 | 초기화 스크립트는 빈 볼륨에서만 실행된다. `IF NOT EXISTS`로 커버되지 않는 변경(컬럼 타입 등)은 `-Reset -Force` 또는 수동 `ALTER TABLE` |
 | 한글이 깨짐 | 서버 인코딩은 UTF8이다. 클라이언트 쪽 `client_encoding`이나 터미널 코드페이지를 확인 |
+| `article_chunks` 또는 `chunk_embeddings`가 없음 | 기존 볼륨에는 초기화 SQL이 자동 재실행되지 않는다. `init_db()`를 실행하거나 DB 볼륨을 재생성한다. |
+| `type "vector" does not exist` | 일반 PostgreSQL 이미지가 실행 중이거나 pgvector 확장이 적용되지 않은 상태다. DB 이미지와 `CREATE EXTENSION vector` 적용 여부를 확인한다. |
