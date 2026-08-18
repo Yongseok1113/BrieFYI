@@ -164,7 +164,7 @@ scheduler.run_forever()   # 또는 start() / stop()
 ## 테스트
 
 ```bash
-python -m unittest discover -s tests -t .                  # 전체 (빠름, 1초 미만)
+python -m unittest discover -t .                           # 전체 (tests/ + rag/tests/)
 python -m unittest tests.test_scheduler                    # 스케줄러
 python -m unittest tests.test_main_modes                   # main의 single/trigger 모드
 python -m unittest tests.test_db_connection                # DB 접속 (URL 조립 + 실접속)

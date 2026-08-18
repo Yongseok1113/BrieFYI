@@ -16,6 +16,12 @@ class Config:
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
+    # Hugging Face Inference API (RAG dense embedding)
+    HF_TOKEN = os.getenv("HF_TOKEN", "")
+    HF_EMBEDDING_MODEL = os.getenv("HF_EMBEDDING_MODEL", "BAAI/bge-m3")
+    HF_EMBEDDING_DIMENSION = 1024
+    HF_EMBEDDING_TIMEOUT_SECONDS = 120
+
     # Hugging Face Inference API (finetune/으로 학습한 요약 모델. SUMMARIZER_PROVIDER=hf일 때 사용)
     # HF_MODEL_ID는 코랩에서 병합 후 push한 모델 저장소 이름
     # (예: "username/briefyi-qwen3-8b-summarize"). tools/hf_llm_client.py 참고.

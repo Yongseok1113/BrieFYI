@@ -12,7 +12,10 @@ from psycopg.types.json import Jsonb
 
 from config import config
 
-SCHEMA_PATH = Path(__file__).parent / "schema.sql"
+SCHEMA_PATHS = (
+    Path(__file__).parent / "schema.sql",
+    Path(__file__).parent / "vector_schema.sql",
+)
 
 
 def init_db() -> None:
@@ -23,7 +26,8 @@ def init_db() -> None:
     파라미터가 없는 쿼리는 여러 문장을 한 번에 실행할 수 있다.
     """
     with get_conn() as conn:
-        conn.execute(SCHEMA_PATH.read_text(encoding="utf-8"))
+        for schema_path in SCHEMA_PATHS:
+            conn.execute(schema_path.read_text(encoding="utf-8"))
 
 
 @contextmanager
