@@ -132,6 +132,7 @@ class ConnectTest(unittest.TestCase):
                 "article_events",
                 "article_event_arguments",
                 "article_event_index_status",
+                "summarize_agent_runs",
             },
             {r["table_name"] for r in rows},
         )
