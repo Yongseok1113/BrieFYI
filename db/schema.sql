@@ -96,3 +96,15 @@ CREATE TABLE IF NOT EXISTS send_log (
 );
 
 CREATE INDEX IF NOT EXISTS send_log_digest_id_idx ON send_log (digest_id);
+
+
+-- 관심분야 구독 신청 (demo 브랜치, 프론트 signup 페이지용)
+CREATE TABLE IF NOT EXISTS subscribers (
+    id BIGSERIAL PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    categories JSONB NOT NULL DEFAULT '[]',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS subscribers_email_idx ON subscribers (email);

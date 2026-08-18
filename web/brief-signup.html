@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrieFYI — 관심사 등록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<style>
+  :root {
+    --cream: #FDFBF1;
+    --card: #FFFFFF;
+    --lemon: #F5E14C;
+    --lemon-line: #E8D62E;
+    --lemon-soft: #FBF6C9;
+    --mint: #3FD8AC;
+    --mint-deep: #1FA985;
+    --mint-soft: #DAF7EC;
+    --ink: #22302A;
+    --ink-soft: #7C8A82;
+    --line: #EFEADA;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(48px);
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .blob-lemon {
+    width: 380px;
+    height: 380px;
+    background: var(--lemon);
+    top: -120px;
+    left: -100px;
+    animation: float1 12s ease-in-out infinite;
+  }
+
+  .blob-mint {
+    width: 340px;
+    height: 340px;
+    background: var(--mint);
+    bottom: -110px;
+    right: -90px;
+    animation: float2 14s ease-in-out infinite;
+  }
+
+  .blob-mint-2 {
+    width: 160px;
+    height: 160px;
+    background: var(--mint-soft);
+    top: 30%;
+    right: 6%;
+    opacity: 0.7;
+    animation: float1 9s ease-in-out infinite reverse;
+  }
+
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(24px, 30px) scale(1.06); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20px, -26px) scale(1.05); }
+  }
+
+  .frame {
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+
+  .brand-word {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+
+  .brand-word span { color: var(--mint-deep); }
+
+  h1 {
+    font-family: 'Pretendard Variable', sans-serif;
+    font-weight: 800;
+    font-size: clamp(26px, 6vw, 32px);
+    line-height: 1.35;
+    text-align: center;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+
+  h1 .zest {
+    display: inline-block;
+    background: linear-gradient(180deg, transparent 62%, var(--lemon) 62%);
+    padding: 0 2px;
+  }
+
+  .sub {
+    text-align: center;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    max-width: 34ch;
+    margin: 0 auto 34px;
+  }
+
+  /* ---- Card ---- */
+  .card {
+    background: var(--card);
+    border-radius: 28px;
+    padding: 34px 30px 28px;
+    box-shadow:
+      0 4px 0 var(--line),
+      0 24px 48px -20px rgba(63, 216, 172, 0.28),
+      0 20px 40px -24px rgba(245, 225, 76, 0.35);
+    position: relative;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+
+  .field { margin-bottom: 26px; }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--line);
+    border-radius: 16px;
+    background: #FFFFFF;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    padding: 0 4px 0 16px;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--mint);
+    box-shadow: 0 0 0 4px var(--mint-soft);
+  }
+
+  .input-wrap svg { flex-shrink: 0; opacity: 0.55; }
+
+  input[type="email"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'Pretendard Variable', sans-serif;
+    font-size: 15.5px;
+    padding: 14px 10px;
+    color: var(--ink);
+    outline: none;
+    min-width: 0;
+  }
+
+  input[type="email"]::placeholder { color: #C7C2AC; }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+
+  .chip { position: relative; }
+
+  .chip input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .chip label {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border: 2px solid var(--mint);
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mint-deep);
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .chip label .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--mint);
+    transition: all 0.15s ease;
+  }
+
+  .chip input:checked + label {
+    background: var(--lemon);
+    border-color: var(--lemon-line);
+    color: #5C5000;
+  }
+
+  .chip input:checked + label .dot {
+    background: #5C5000;
+    border-color: #5C5000;
+  }
+
+  .chip input:hover + label {
+    background: var(--mint-soft);
+  }
+
+  .chip input:checked:hover + label {
+    background: var(--lemon);
+  }
+
+  .chip input:focus-visible + label {
+    outline: 2px solid var(--mint-deep);
+    outline-offset: 2px;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 12px;
+  }
+
+  button.submit {
+    width: 100%;
+    font-family: 'Pretendard Variable', sans-serif;
+    font-weight: 800;
+    font-size: 15.5px;
+    background: var(--ink);
+    color: var(--lemon);
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: transform 0.14s ease, background 0.14s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  button.submit:hover { background: #14201B; }
+  button.submit:active { transform: scale(0.98); }
+
+  button.submit:focus-visible {
+    outline: 2px solid var(--mint-deep);
+    outline-offset: 3px;
+  }
+
+  .error-msg {
+    font-size: 12.5px;
+    color: #D9714E;
+    margin-top: 10px;
+    min-height: 16px;
+  }
+
+  /* ---- Success state ---- */
+  .success {
+    display: none;
+    text-align: center;
+    padding: 10px 4px 4px;
+  }
+
+  .success.show { display: block; }
+  .card.success-mode .form-body { display: none; }
+
+  .success-badge {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: var(--mint-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pop 0.4s cubic-bezier(.2,1.6,.4,1);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .success h2 {
+    font-size: 19px;
+    font-weight: 800;
+    margin: 0 0 8px;
+  }
+
+  .success p {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0 0 20px;
+  }
+
+  .receipt {
+    text-align: left;
+    background: var(--cream);
+    border: 1.5px dashed var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 13px;
+  }
+
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    color: var(--ink-soft);
+  }
+
+  .receipt-row b { color: var(--ink); font-weight: 700; text-align: right; }
+
+  .foot-note {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    opacity: 0.85;
+    line-height: 1.6;
+  }
+
+  .unsub-link {
+    display: block;
+    margin: 6px auto 0;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: 'Pretendard Variable', sans-serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+    opacity: 0.85;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .unsub-link:hover { opacity: 1; }
+
+  .unsub-link:focus-visible {
+    outline: 2px solid var(--mint-deep);
+    outline-offset: 3px;
+  }
+
+  .unsub-panel {
+    display: none;
+    max-width: 340px;
+    margin: 14px auto 0;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px;
+  }
+
+  .unsub-panel.open { display: block; }
+
+  .unsub-panel .unsub-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .unsub-panel input[type="email"] {
+    flex: 1;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+  }
+
+  .unsub-panel input[type="email"]:focus {
+    outline: none;
+    border-color: var(--mint);
+  }
+
+  .unsub-panel button.unsub-confirm {
+    font-family: 'Pretendard Variable', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    background: var(--ink);
+    color: var(--lemon);
+    border: none;
+    border-radius: 10px;
+    padding: 0 16px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .unsub-panel button.unsub-confirm:hover { background: #14201B; }
+
+  .unsub-status {
+    font-size: 12px;
+    margin-top: 8px;
+    min-height: 15px;
+  }
+
+  .unsub-status.ok { color: var(--mint-deep); }
+  .unsub-status.err { color: #D9714E; }
+
+  .confetti {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+    top: -20px;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  @keyframes drop {
+    to { transform: translateY(110vh) rotate(300deg); opacity: 0.9; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="blob blob-lemon"></div>
+  <div class="blob blob-mint"></div>
+  <div class="blob blob-mint-2"></div>
+
+  <div class="frame">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="9" fill="#F5E14C" stroke="#E8D62E" stroke-width="1.5"/>
+        <g stroke="#5C5000" stroke-width="1" opacity="0.55">
+          <line x1="10" y1="2.5" x2="10" y2="17.5"/>
+          <line x1="10" y1="2.5" x2="10" y2="17.5" transform="rotate(45 10 10)"/>
+          <line x1="10" y1="2.5" x2="10" y2="17.5" transform="rotate(90 10 10)"/>
+          <line x1="10" y1="2.5" x2="10" y2="17.5" transform="rotate(135 10 10)"/>
+        </g>
+      </svg>
+      <span class="brand-word">Brie<span>FYI</span></span>
+    </div>
+
+    <h1>매일 아침, <span class="zest">내 취향대로</span><br>관심 분야 브리핑 받기</h1>
+    <p class="sub">이메일과 관심 분야만 입력하시면 그 분야 최신 소식을 매일 아침 보내드려요.</p>
+
+    <form class="card" id="ticketForm" novalidate>
+      <div class="form-body">
+        <div class="field">
+          <label for="email">이메일</label>
+          <div class="input-wrap">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C8A82" stroke-width="2">
+              <rect x="3" y="5" width="18" height="14" rx="3"/>
+              <path d="M3 7l9 6 9-6"/>
+            </svg>
+            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>관심 분야 <span style="font-weight:400; color:#C7C2AC;">· 복수 선택 가능</span></label>
+          <div class="chips" id="chips">
+            <div class="chip">
+              <input type="checkbox" id="cat-economy" name="category" value="경제">
+              <label for="cat-economy"><span class="dot"></span>경제</label>
+            </div>
+            <div class="chip">
+              <input type="checkbox" id="cat-tech" name="category" value="기술">
+              <label for="cat-tech"><span class="dot"></span>기술</label>
+            </div>
+            <div class="chip">
+              <input type="checkbox" id="cat-finance" name="category" value="금융">
+              <label for="cat-finance"><span class="dot"></span>금융</label>
+            </div>
+            <div class="chip">
+              <input type="checkbox" id="cat-industry" name="category" value="산업">
+              <label for="cat-industry"><span class="dot"></span>산업</label>
+            </div>
+            <div class="chip">
+              <input type="checkbox" id="cat-sports" name="category" value="스포츠">
+              <label for="cat-sports"><span class="dot"></span>스포츠</label>
+            </div>
+            <div class="chip">
+              <input type="checkbox" id="cat-politics" name="category" value="정치">
+              <label for="cat-politics"><span class="dot"></span>정치</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 허니팟: 사람 눈엔 안 보이는 필드. 봇은 이것도 채워서 보내는 경우가 많아,
+             값이 있으면 서버가 조용히 신청을 무시한다. -->
+        <input type="text" name="hp" id="hp" autocomplete="off" tabindex="-1"
+               style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" aria-hidden="true">
+
+        <button type="submit" class="submit">
+          구독 시작하기
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M13 6l6 6-6 6"/>
+          </svg>
+        </button>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <div class="success" id="successBlock">
+        <div class="success-badge">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1FA985" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+        </div>
+        <h2>구독 완료!</h2>
+        <p>내일 아침부터 상큼한 브리핑이 도착해요.</p>
+        <div class="receipt">
+          <div class="receipt-row"><span>이메일</span><b id="rcptEmail"></b></div>
+          <div class="receipt-row"><span>관심 분야</span><b id="rcptCats"></b></div>
+        </div>
+      </div>
+    </form>
+
+    <p class="foot-note">
+      입력하신 이메일은 브리핑 발송 목적으로만 사용돼요.
+    </p>
+    <button type="button" class="unsub-link" id="unsubToggle">구독 취소하기</button>
+    <div class="unsub-panel" id="unsubPanel">
+      <div class="unsub-row">
+        <input type="email" id="unsubEmail" placeholder="구독 중인 이메일">
+        <button type="button" class="unsub-confirm" id="unsubConfirm">취소하기</button>
+      </div>
+      <div class="unsub-status" id="unsubStatus"></div>
+    </div>
+  </div>
+
+<script>
+  // 로컬에서 uvicorn으로 이 주소에 signup_service를 띄워둔 상태여야 실제 신청이 저장된다.
+  // (signup_service 폴더의 README.md 참고)
+  const API_BASE = 'http://127.0.0.1:8000';
+
+  const form = document.getElementById('ticketForm');
+  const card = form;
+  const emailInput = document.getElementById('email');
+  const chips = document.querySelectorAll('input[name="category"]');
+  const errorMsg = document.getElementById('errorMsg');
+  const successBlock = document.getElementById('successBlock');
+  const rcptEmail = document.getElementById('rcptEmail');
+  const rcptCats = document.getElementById('rcptCats');
+  const submitBtn = form.querySelector('button.submit');
+  const hpField = document.getElementById('hp');
+
+  const confettiColors = ['#F5E14C', '#3FD8AC', '#FBF6C9', '#DAF7EC'];
+
+  function burstConfetti() {
+    const count = 26;
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      const startX = window.innerWidth / 2 + (Math.random() - 0.5) * 260;
+      el.style.left = startX + 'px';
+      el.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+      el.style.animation = `drop ${1.1 + Math.random() * 0.8}s ease-in forwards`;
+      el.style.animationDelay = (Math.random() * 0.15) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2200);
+    }
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    if (!emailInput.value.trim() || !emailInput.value.includes('@')) {
+      errorMsg.textContent = '이메일을 정확히 입력해 주세요.';
+      emailInput.focus();
+      return;
+    }
+
+    const checked = Array.from(chips).filter(c => c.checked).map(c => c.value);
+
+    if (checked.length === 0) {
+      errorMsg.textContent = '관심 분야를 하나 이상 선택해 주세요.';
+      chips[0].focus();
+      return;
+    }
+
+    errorMsg.textContent = '';
+
+    const email = emailInput.value.trim();
+
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.6';
+    const originalLabel = submitBtn.innerHTML;
+    submitBtn.textContent = '신청 중...';
+
+    try {
+      const res = await fetch(`${API_BASE}/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          categories: checked,
+          hp: hpField.value, // 항상 빈 값이어야 정상 (사람이 입력한 경우)
+        }),
+      });
+
+      if (!res.ok) {
+        const detail = await res.json().catch(() => null);
+        // FastAPI 에러 형태가 두 가지라 둘 다 처리한다:
+        //   문자열 하나  -> {"detail": "관심 분야를 하나 이상..."}
+        //   검증 에러 목록 -> {"detail": [{"msg": "..."}]}
+        const detailValue = detail?.detail;
+        const message =
+          typeof detailValue === 'string'
+            ? detailValue
+            : detailValue?.[0]?.msg;
+        throw new Error(message || '신청 처리에 실패했어요.');
+      }
+
+      rcptEmail.textContent = email;
+      rcptCats.textContent = checked.join(', ');
+
+      card.classList.add('success-mode');
+      successBlock.classList.add('show');
+
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        burstConfetti();
+      }
+    } catch (err) {
+      errorMsg.textContent =
+        err.message === 'Failed to fetch'
+          ? '서버에 연결할 수 없어요. signup_service가 실행 중인지 확인해 주세요.'
+          : err.message;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.innerHTML = originalLabel;
+    }
+  });
+
+  // ---- 구독 취소 ----
+  const unsubToggle = document.getElementById('unsubToggle');
+  const unsubPanel = document.getElementById('unsubPanel');
+  const unsubEmail = document.getElementById('unsubEmail');
+  const unsubConfirm = document.getElementById('unsubConfirm');
+  const unsubStatus = document.getElementById('unsubStatus');
+
+  unsubToggle.addEventListener('click', function () {
+    unsubPanel.classList.toggle('open');
+    if (unsubPanel.classList.contains('open')) unsubEmail.focus();
+  });
+
+  unsubConfirm.addEventListener('click', async function () {
+    const email = unsubEmail.value.trim();
+
+    if (!email || !email.includes('@')) {
+      unsubStatus.textContent = '이메일을 정확히 입력해 주세요.';
+      unsubStatus.className = 'unsub-status err';
+      return;
+    }
+
+    unsubConfirm.disabled = true;
+    unsubStatus.textContent = '';
+
+    try {
+      const res = await fetch(`${API_BASE}/subscribe`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.deleted) {
+        unsubStatus.textContent = '구독이 취소됐어요.';
+        unsubStatus.className = 'unsub-status ok';
+        unsubEmail.value = '';
+      } else if (res.ok) {
+        unsubStatus.textContent = '등록된 이메일이 아니에요.';
+        unsubStatus.className = 'unsub-status err';
+      } else {
+        throw new Error('처리에 실패했어요.');
+      }
+    } catch (err) {
+      unsubStatus.textContent =
+        err.message === 'Failed to fetch'
+          ? '서버에 연결할 수 없어요.'
+          : err.message;
+      unsubStatus.className = 'unsub-status err';
+    } finally {
+      unsubConfirm.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
