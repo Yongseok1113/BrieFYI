@@ -94,3 +94,23 @@ CREATE INDEX IF NOT EXISTS article_events_article_id_idx
 
 CREATE INDEX IF NOT EXISTS article_event_arguments_normalized_text_idx
     ON article_event_arguments (normalized_text);
+
+-- 검색 결과 요약 + grounding 검증 + LLM judge 재시도 루프의 시도별 기록
+-- (rag_latest/summarize_agent.py). run_id로 한 번의 호출에 속한 여러 attempt를 묶는다.
+CREATE TABLE IF NOT EXISTS summarize_agent_runs (
+    id BIGSERIAL PRIMARY KEY,
+    run_id UUID NOT NULL,
+    query TEXT NOT NULL,
+    attempt_number INTEGER NOT NULL CHECK (attempt_number >= 1),
+    summary TEXT NOT NULL,
+    citations JSONB NOT NULL DEFAULT '[]',
+    grounding_passed BOOLEAN NOT NULL,
+    grounding_issues JSONB NOT NULL DEFAULT '[]',
+    judge_score DOUBLE PRECISION NOT NULL CHECK (judge_score BETWEEN 0 AND 100),
+    judge_reasoning TEXT,
+    provider TEXT NOT NULL,
+    passed_threshold BOOLEAN NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS summarize_agent_runs_run_id_idx ON summarize_agent_runs (run_id);
