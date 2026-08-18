@@ -1,0 +1,2 @@
+# Local cross-encoder reranker 전용. 공유 requirements.txt에는 포함하지 않는다.
+FlagEmbedding>=1.2.0
