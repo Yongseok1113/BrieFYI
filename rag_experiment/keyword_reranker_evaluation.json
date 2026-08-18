@@ -1,0 +1,168 @@
+{
+  "num_keywords": 7,
+  "recall@1": {
+    "before": 0.8571428571428571,
+    "after": 0.7142857142857143
+  },
+  "recall@3": {
+    "before": 0.8571428571428571,
+    "after": 1.0
+  },
+  "recall@5": {
+    "before": 1.0,
+    "after": 1.0
+  },
+  "mrr": {
+    "before": 0.8928571428571429,
+    "after": 0.8571428571428571
+  },
+  "details": [
+    {
+      "keyword": "삼성전자",
+      "before_ranks": [
+        4
+      ],
+      "after_ranks": [
+        2
+      ],
+      "recall@1_before": 0,
+      "recall@3_before": 0,
+      "recall@5_before": 1,
+      "recall@1_after": 0,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 0.25,
+      "mrr_after": 0.5
+    },
+    {
+      "keyword": "반도체",
+      "before_ranks": [
+        1,
+        3,
+        5,
+        7,
+        9,
+        12
+      ],
+      "after_ranks": [
+        2,
+        3,
+        5,
+        8,
+        9,
+        11
+      ],
+      "recall@1_before": 1,
+      "recall@3_before": 1,
+      "recall@5_before": 1,
+      "recall@1_after": 0,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 1.0,
+      "mrr_after": 0.5
+    },
+    {
+      "keyword": "축구",
+      "before_ranks": [
+        1,
+        2,
+        3,
+        10
+      ],
+      "after_ranks": [
+        1,
+        2,
+        4,
+        10
+      ],
+      "recall@1_before": 1,
+      "recall@3_before": 1,
+      "recall@5_before": 1,
+      "recall@1_after": 1,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 1.0,
+      "mrr_after": 1.0
+    },
+    {
+      "keyword": "이정후",
+      "before_ranks": [
+        1,
+        2
+      ],
+      "after_ranks": [
+        1,
+        2
+      ],
+      "recall@1_before": 1,
+      "recall@3_before": 1,
+      "recall@5_before": 1,
+      "recall@1_after": 1,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 1.0,
+      "mrr_after": 1.0
+    },
+    {
+      "keyword": "토미 존",
+      "before_ranks": [
+        1,
+        2,
+        3
+      ],
+      "after_ranks": [
+        1,
+        2,
+        3
+      ],
+      "recall@1_before": 1,
+      "recall@3_before": 1,
+      "recall@5_before": 1,
+      "recall@1_after": 1,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 1.0,
+      "mrr_after": 1.0
+    },
+    {
+      "keyword": "호날두",
+      "before_ranks": [
+        1,
+        2
+      ],
+      "after_ranks": [
+        1,
+        2
+      ],
+      "recall@1_before": 1,
+      "recall@3_before": 1,
+      "recall@5_before": 1,
+      "recall@1_after": 1,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 1.0,
+      "mrr_after": 1.0
+    },
+    {
+      "keyword": "아스날",
+      "before_ranks": [
+        1,
+        2,
+        4
+      ],
+      "after_ranks": [
+        1,
+        2,
+        4
+      ],
+      "recall@1_before": 1,
+      "recall@3_before": 1,
+      "recall@5_before": 1,
+      "recall@1_after": 1,
+      "recall@3_after": 1,
+      "recall@5_after": 1,
+      "mrr_before": 1.0,
+      "mrr_after": 1.0
+    }
+  ]
+}

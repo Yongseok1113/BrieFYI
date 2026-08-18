@@ -1,0 +1,63 @@
+{
+  "num_queries": 4,
+  "mrr": {
+    "vector": 1.0,
+    "reranker": 1.0
+  },
+  "recall@10": 1.0,
+  "precision@10": 0.1,
+  "details": [
+    {
+      "field": "야구",
+      "query": "이정후의 최근 경기 성적과 시즌 타율은?",
+      "relevant_ids": [
+        578
+      ],
+      "vector_rank": 1,
+      "reranker_rank": 1,
+      "vector_mrr": 1.0,
+      "reranker_mrr": 1.0,
+      "recall@10": 1,
+      "precision@10": 0.1
+    },
+    {
+      "field": "삼성",
+      "query": "삼성전자 반도체 부문의 최근 실적과 실적 개선 이유는?",
+      "relevant_ids": [
+        153
+      ],
+      "vector_rank": 1,
+      "reranker_rank": 1,
+      "vector_mrr": 1.0,
+      "reranker_mrr": 1.0,
+      "recall@10": 1,
+      "precision@10": 0.1
+    },
+    {
+      "field": "축구",
+      "query": "호날두가 은퇴를 시사한 이유와 시점은?",
+      "relevant_ids": [
+        572
+      ],
+      "vector_rank": 1,
+      "reranker_rank": 1,
+      "vector_mrr": 1.0,
+      "reranker_mrr": 1.0,
+      "recall@10": 1,
+      "precision@10": 0.1
+    },
+    {
+      "field": "반도체",
+      "query": "올해 3분기 PC용 D램 가격은 어떻게 전망돼?",
+      "relevant_ids": [
+        348
+      ],
+      "vector_rank": 1,
+      "reranker_rank": 1,
+      "vector_mrr": 1.0,
+      "reranker_mrr": 1.0,
+      "recall@10": 1,
+      "precision@10": 0.1
+    }
+  ]
+}
