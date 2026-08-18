@@ -8,10 +8,11 @@ from config import config
 RESEND_URL = "https://api.resend.com/emails"
 
 
-def send_email(subject: str, html: str) -> dict:
+def send_email(subject: str, html: str, to: str | None = None) -> dict:
+    recipient = to or config.EMAIL_TO
     if not config.RESEND_API_KEY:
         raise RuntimeError("RESEND_API_KEY가 설정되지 않았습니다 (.env 확인)")
-    if not config.EMAIL_FROM or not config.EMAIL_TO:
+    if not config.EMAIL_FROM or not recipient:
         raise RuntimeError("EMAIL_FROM / EMAIL_TO가 설정되지 않았습니다 (.env 확인)")
 
     resp = requests.post(
@@ -19,7 +20,7 @@ def send_email(subject: str, html: str) -> dict:
         headers={"Authorization": f"Bearer {config.RESEND_API_KEY}"},
         json={
             "from": config.EMAIL_FROM,
-            "to": [config.EMAIL_TO],
+            "to": [recipient],
             "subject": subject,
             "html": html,
         },

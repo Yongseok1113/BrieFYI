@@ -122,6 +122,9 @@ class ConnectTest(unittest.TestCase):
                 "raw_articles",
                 "digests",
                 "send_log",
+                # db/schema.sql (data_pipeline)
+                "enrichment",
+                "synonym_table",
                 # db/vector_schema.sql (RAG)
                 "article_chunks",
                 "chunk_embeddings",

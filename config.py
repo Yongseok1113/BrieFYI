@@ -32,6 +32,11 @@ class Config:
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
     EMAIL_FROM = os.getenv("EMAIL_FROM", "")
     EMAIL_TO = os.getenv("EMAIL_TO", "")
+    # EMAIL_TO에 쉼표로 여러 주소를 넣으면 각각에 개별 발송한다 (agents/distributor.py).
+    EMAIL_RECIPIENTS = [addr.strip() for addr in EMAIL_TO.split(",") if addr.strip()]
+
+    # Discord (백로그 #9, tools/discord_send.py)
+    DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
     # 파이프라인 파라미터
     NEWS_KEYWORD = os.getenv("NEWS_KEYWORD", "AI")

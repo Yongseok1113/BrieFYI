@@ -13,7 +13,7 @@ jobs:
     # DATABASE_URL을 Secrets로 넣고 아래 services 블록을 제거할 것.
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: briefyi
           POSTGRES_USER: briefyi

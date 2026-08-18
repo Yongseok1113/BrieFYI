@@ -74,6 +74,10 @@ def _dict_to_config(d: dict[str, Any]) -> Config:
         unknown = set(nested_dict) - valid_keys
         if unknown:
             raise ConfigError(f"'{key}' 섹션에 알 수 없는 필드: {sorted(unknown)}")
+        if "learning_rate" in nested_dict:
+            # PyYAML은 소수점 없는 지수 표기(예: 1e-4)를 float가 아니라 문자열로 파싱한다.
+            # 모든 finetune/configs/*.yaml이 이 표기를 쓰므로 명시적으로 캐스팅한다.
+            nested_dict["learning_rate"] = float(nested_dict["learning_rate"])
         kwargs[key] = nested_cls(**nested_dict)
 
     valid_top_keys = {f.name for f in fields(Config)}

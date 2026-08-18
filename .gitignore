@@ -11,3 +11,5 @@ test_email.html
 test_text.json
 
 .worktrees/
+.venv
+pipeline.db
