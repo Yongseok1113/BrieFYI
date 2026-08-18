@@ -33,6 +33,9 @@ class Config:
     EMAIL_FROM = os.getenv("EMAIL_FROM", "")
     EMAIL_TO = os.getenv("EMAIL_TO", "")
 
+    # Discord (백로그 #9, tools/discord_send.py)
+    DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
+
     # 파이프라인 파라미터
     NEWS_KEYWORD = os.getenv("NEWS_KEYWORD", "AI")
     NEWS_LOOKBACK_DAYS = int(os.getenv("NEWS_LOOKBACK_DAYS", "1"))
