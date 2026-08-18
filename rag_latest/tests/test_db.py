@@ -9,7 +9,7 @@ from unittest import mock
 from pgvector import Vector
 from pgvector.psycopg import register_vector
 
-from db.db import get_conn
+from db.db import get_conn, init_db
 from rag_latest import db
 from rag_latest.retriever import retrieve
 from tests.dbhelpers import TEST_URL_PREFIX, DbTestCase, requires_db
@@ -397,6 +397,35 @@ class TopicStoreDbTest(DbTestCase):
                 (article_id,),
             ).fetchone()["count"]
         self.assertEqual(0, remaining)
+
+
+class SaveAgentRunTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        try:
+            init_db()
+        except Exception as exc:  # noqa: BLE001
+            raise unittest.SkipTest(f"DB 연결 불가: {exc}")
+
+    def test_한_행이_저장되고_조회된다(self):
+        import uuid
+
+        from rag_latest.db import save_agent_run
+
+        run_id = str(uuid.uuid4())
+        save_agent_run(
+            run_id=run_id, query="테스트 질의", attempt_number=1, summary="테스트 요약",
+            citations=[{"sentence": "s", "article_id": 1}], grounding_passed=True,
+            grounding_issues=[], judge_score=88.5, judge_reasoning="근거 충분",
+            provider="groq", passed_threshold=True,
+        )
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM summarize_agent_runs WHERE run_id = %s", (run_id,))
+            row = cur.fetchone()
+        self.assertEqual(row["query"], "테스트 질의")
+        self.assertEqual(row["judge_score"], 88.5)
+        with get_conn() as conn:
+            conn.execute("DELETE FROM summarize_agent_runs WHERE run_id = %s", (run_id,))
 
 
 if __name__ == "__main__":

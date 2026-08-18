@@ -11,6 +11,7 @@ from collections.abc import Iterable
 
 from pgvector import Vector
 from pgvector.psycopg import register_vector
+from psycopg.types.json import Jsonb
 
 from config import config
 from db.db import get_conn
@@ -428,3 +429,45 @@ def text_search(query: str, limit: int) -> list[dict]:
                LIMIT %(limit)s""",
             {"query": query, "limit": limit},
         ).fetchall()
+
+
+# ---------------------------------------------------------------------------
+# summarize_agent 실행 기록
+# ---------------------------------------------------------------------------
+
+def save_agent_run(
+    run_id: str,
+    query: str,
+    attempt_number: int,
+    summary: str,
+    citations: list[dict],
+    grounding_passed: bool,
+    grounding_issues: list[dict],
+    judge_score: float,
+    judge_reasoning: str,
+    provider: str,
+    passed_threshold: bool,
+) -> None:
+    """summarize_agent.py의 시도 1건을 summarize_agent_runs에 기록한다."""
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO summarize_agent_runs
+                   (run_id, query, attempt_number, summary, citations, grounding_passed,
+                    grounding_issues, judge_score, judge_reasoning, provider, passed_threshold)
+               VALUES (%(run_id)s, %(query)s, %(attempt_number)s, %(summary)s, %(citations)s,
+                       %(grounding_passed)s, %(grounding_issues)s, %(judge_score)s,
+                       %(judge_reasoning)s, %(provider)s, %(passed_threshold)s)""",
+            {
+                "run_id": run_id,
+                "query": query,
+                "attempt_number": attempt_number,
+                "summary": summary,
+                "citations": Jsonb(citations),
+                "grounding_passed": grounding_passed,
+                "grounding_issues": Jsonb(grounding_issues),
+                "judge_score": judge_score,
+                "judge_reasoning": judge_reasoning,
+                "provider": provider,
+                "passed_threshold": passed_threshold,
+            },
+        )
