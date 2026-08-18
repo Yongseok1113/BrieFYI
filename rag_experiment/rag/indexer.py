@@ -46,7 +46,19 @@ def get_connection():
 def index_chunks(
     title: str,
     source_url: str,
-    chunks: List[str]
+    chunks: List[str],
+    # --------------------------------------
+    # = None 이 붙어있는 이유:
+    #   "기본값이 None"이라는 뜻. 즉 이 4개를 안 넘겨도
+    #   함수 호출 자체는 에러 없이 동작한다.
+    #
+    # str = None 같은 표기는 "타입 힌트"라고 해서
+    #   "이 값은 보통 문자열이지만, 안 넘기면 None일 수도 있다"는
+    #   설명용 표시일 뿐, 실제 동작에 영향은 없다.
+    category: str = None,
+    domain: str = None,
+    entities: List[str] = None,
+    event: str = None,
 ) -> int:
     """
     기사 chunk들을 임베딩하여 DB에 저장한다.
@@ -55,6 +67,10 @@ def index_chunks(
         title: 기사 제목
         source_url: 기사 원문 URL
         chunks: chunk 문자열 리스트
+        category: 대분류 (예: "기술") - classify.py가 판단한 값
+        domain: 도메인 (예: "AI") - classify.py가 판단한 값
+        entities: 엔티티 리스트 (예: ["엔비디아"]) - classify.py가 판단한 값
+        event: 이벤트 (예: "투자") - classify.py가 판단한 값
 
     Returns:
         저장된 chunk 개수
@@ -85,6 +101,16 @@ def index_chunks(
             embeddings
         ):
 
+            # ------------------------------
+            # INSERT문에 category, domain, entities, event
+            # 4개 컬럼을 추가했다.
+            #
+            # VALUES 뒤 괄호 안 %s 개수가
+            # 컬럼 개수(8개)랑 정확히 일치해야 한다.
+            #
+            # entities는 파이썬 리스트(예: ["엔비디아"])를
+            # 그대로 넘기면 psycopg2가 알아서
+            # Postgres의 TEXT[] 배열 타입으로 변환해준다.
             cur.execute(
                 """
                 INSERT INTO rag_documents
@@ -92,10 +118,18 @@ def index_chunks(
                     title,
                     content,
                     source_url,
-                    embedding
+                    embedding,
+                    category,
+                    domain,
+                    entities,
+                    event
                 )
                 VALUES
                 (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
                     %s,
                     %s,
                     %s,
@@ -106,7 +140,11 @@ def index_chunks(
                     title,
                     chunk,
                     source_url,
-                    embedding
+                    embedding,
+                    category,
+                    domain,
+                    entities,
+                    event
                 )
             )
 
@@ -170,19 +208,28 @@ if __name__ == "__main__":
 
     test_title = "테스트 뉴스 기사"
 
-    test_url = "https://example.com/test"
+    test_url = "https://example.com/test-metadata"
 
     test_chunks = [
-        "프로야구 경기에서 새로운 기록이 나왔다.",
-        "선수들은 이번 경기에서 좋은 활약을 보여주었다.",
+        "엔비디아가 AI 반도체 스타트업에 대규모 투자를 단행했다.",
+        "이번 투자로 AI 반도체 생태계가 더욱 확장될 전망이다.",
     ]
 
-    print("\nChunk 임베딩 및 DB 저장 중...")
+    # --------------------------------------
+    # 테스트는 category/domain/entities/event를
+    # 직접 값으로 넣어서 테스트한다.
+    # (실제 파이프라인에서는 sbs_to_rag.py가
+    #  classify.py 결과를 여기 넣어주게 될 것)
+    print("\nChunk 임베딩 및 DB 저장 중 (metadata 포함)...")
 
     saved = index_chunks(
         title=test_title,
         source_url=test_url,
-        chunks=test_chunks
+        chunks=test_chunks,
+        category="기술",
+        domain="AI",
+        entities=["엔비디아"],
+        event="투자",
     )
 
     print(f"저장된 Chunk: {saved}개")
@@ -192,5 +239,5 @@ if __name__ == "__main__":
     print(f"현재 DB 전체 Chunk: {total}개")
 
     print("\n" + "=" * 60)
-    print("Indexer 테스트 완료")
+    print("Indexer 테스트 완료 (metadata 저장 확인)")
     print("=" * 60)
