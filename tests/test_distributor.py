@@ -64,6 +64,22 @@ class DistributorMultiRecipientTest(unittest.TestCase):
         email_tool.assert_not_called()
         self.assertEqual(result, {})
 
+    def test_전원_발송_실패하면_error를_설정한다(self):
+        email_tool = MagicMock(side_effect=RuntimeError("발송 실패"))
+        log_send_tool = MagicMock()
+        agent = DistributorAgent(
+            name="distributor",
+            tools={"email": email_tool, "log_send": log_send_tool},
+            channels=["email"],
+        )
+
+        with unittest.mock.patch("agents.distributor.config") as mock_config:
+            mock_config.EMAIL_RECIPIENTS = ["a@example.com", "b@example.com"]
+            result = agent.run(_make_state())
+
+        self.assertEqual(result["send_result"]["success_count"], 0)
+        self.assertIn("error", result)
+
 
 if __name__ == "__main__":
     unittest.main()

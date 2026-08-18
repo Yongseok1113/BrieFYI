@@ -49,8 +49,10 @@ def search_news(
         category=category,
         domains=domains,
     )
-    reranked = reranker.rerank(query, candidates, top_k=top_k)
-    reranker.unload_reranker()
+    try:
+        reranked = reranker.rerank(query, candidates, top_k=top_k)
+    finally:
+        reranker.unload_reranker()
 
     return [
         {

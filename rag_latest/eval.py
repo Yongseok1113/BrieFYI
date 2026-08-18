@@ -7,7 +7,8 @@ rag_latest.retriever.retrieve()를 대상으로 재작성했다. 합성 데이�
 
 DB + HF embedding API가 필요한 수동 리포트 도구다. CI에서 자동 실행하지 않는다.
 
-    python -m rag_latest.eval self-retrieval --top-k 5 10
+    from rag_latest.eval import evaluate_self_retrieval
+    evaluate_self_retrieval(article_ids=[19, 20, 21], top_k_values=(5, 10))
 """
 from __future__ import annotations
 

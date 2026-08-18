@@ -56,15 +56,15 @@ RAG 핵심인 `raw_articles -> article_chunks -> chunk_embeddings -> retrieve()`
 
 | 기능 | 공개 진입점 | 현재 상태 |
 | --- | --- | --- |
-| 수집+4-Layer+embedding | `run_all()` / `python -m rag.cli run` | GNews 신규 기사 end-to-end 처리 |
-| chunk/4-Layer/embedding | `index_articles()`, `index_all_articles()` / `python -m rag.cli index` | 독립 실행 가능 |
-| vector/text/hybrid 검색 | `retrieve()` / `python -m rag.cli search` | 독립 실행 가능 |
-| 구조화 Event 저장 | `index_events()` / `python -m rag.cli events` | 명시 ID 기반 local 독립 실행 가능 |
-| 전체 RAG package | `python -m rag` | `rag/__main__.py`가 없어 지원하지 않음 |
+| 수집+4-Layer+embedding | `run_all()` / `python -m rag_latest.cli run` | GNews 신규 기사 end-to-end 처리 |
+| chunk/4-Layer/embedding | `index_articles()`, `index_all_articles()` / `python -m rag_latest.cli index` | 독립 실행 가능 |
+| vector/text/hybrid 검색 | `retrieve()` / `python -m rag_latest.cli search` | 독립 실행 가능 |
+| 구조화 Event 저장 | `index_events()` / `python -m rag_latest.cli events` | 명시 ID 기반 local 독립 실행 가능 |
+| 전체 RAG package | `python -m rag_latest` | `rag_latest/__main__.py`가 없어 지원하지 않음 |
 
-따라서 향후 Agent Tool은 기존 함수를 얇게 감싸면 된다. `python -m rag.cli run`은
+따라서 향후 Agent Tool은 기존 함수를 얇게 감싸면 된다. `python -m rag_latest.cli run`은
 GNews 수집부터 GLiNER2 4-Layer와 RAG 저장까지 수행하지만, 검색 답변 생성과 digest 발송을
-포함하는 `python -m rag` 전체 application은 아직 없다.
+포함하는 `python -m rag_latest` 전체 application은 아직 없다.
 
 ## 현재 pipeline에 최소 기능 통합 가능한가
 
@@ -139,7 +139,7 @@ worker 환경에서 실행한다. 누락 시 lazy import 지점에서 필요한 
 포함하지 않는다.
 
 ```bash
-pip install -r rag/requirements-event.txt
+pip install -r rag_latest/requirements-event.txt
 ```
 
 ```bash
@@ -201,13 +201,13 @@ raw_articles 1 --- 1 article_topics
 GNews 신규 기사를 수집하면서 4-Layer와 RAG를 함께 저장하려면 다음을 실행한다.
 
 ```bash
-python -m rag.cli run --keyword AI --days 1 --max-results 10 --device cuda
+python -m rag_latest.cli run --keyword AI --days 1 --max-results 10 --device cuda
 
 # 기존 article ID를 본문부터 다시 처리
-python -m rag.cli index --article-ids 19 20 21 --device cuda
+python -m rag_latest.cli index --article-ids 19 20 21 --device cuda
 
 # embedding이 아직 없는 기사만 제한 건수로 처리
-python -m rag.cli index --limit 20 --device cuda
+python -m rag_latest.cli index --limit 20 --device cuda
 ```
 
 GPU가 없는 환경에서는 `--device cpu`를 명시한다. Category/Domain/Entity는 GLiNER2가
@@ -238,7 +238,7 @@ Relation schema를 각각 실행하고, 두 결과를 합쳐 argument-Entity 일
 Event만 명시적으로 재처리할 때는 다음 CLI를 사용한다.
 
 ```bash
-python -m rag.cli events \
+python -m rag_latest.cli events \
   --article-ids 19 20 21 \
   --device cuda
 ```
@@ -373,7 +373,7 @@ metadata_score = score_scale * (
 터미널에서도 실행할 수 있다.
 
 ```bash
-python -m rag.cli search \
+python -m rag_latest.cli search \
   --query "Claude" \
   --mode hybrid \
   --top-k 5 \
@@ -387,7 +387,7 @@ python -m rag.cli search \
 
 ## 기능 테스트 노트북
 
-`rag/rag_function_test.ipynb`는 다음 순서로 구성되어 있다.
+`rag_latest/rag_function_test.ipynb`는 다음 순서로 구성되어 있다.
 
 1. 프로젝트 경로와 `.env` 설정 확인
 2. DB, pgvector 확장, 테이블 확인
@@ -431,7 +431,7 @@ GLiNER2와 CUDA가 준비된 환경에서만 실행된다. 4-Layer 구현 예시
 RAG 단위·DB 통합 테스트는 다음 명령으로 실행한다.
 
 ```bash
-python -m unittest discover -s rag/tests -t . -p "test_*.py"
+python -m unittest discover -s rag_latest/tests -t . -p "test_*.py"
 ```
 
 | 테스트 | 범위 |
@@ -493,3 +493,13 @@ metadata 가산점이 적용되는 것을 확인했다. smoke article과 모든 
 
 RRF는 각 검색기가 후보로 가져온 문서만 결합할 수 있다. 데이터가 늘었을 때 최종
 품질이 떨어지면 RRF 식보다 먼저 vector/text 후보 Recall과 `candidate_k`를 확인한다.
+
+## rag/ 대비 추가된 기능
+
+`rag/`를 뼈대로 복사한 뒤 `rag_experiment/`에서 검증된 기능 중 실질적으로 쓸모 있는 세 가지를 이식했다.
+
+| 파일 | 역할 |
+| --- | --- |
+| `reranker.py` | `BAAI/bge-reranker-v2-m3` cross-encoder로 `retriever.retrieve()` 결과를 재정렬한다. 검색 자체는 건드리지 않고 후처리 단계로 분리했다. 로컬 모델이라 `rag_latest/requirements-rerank.txt`로 별도 설치해야 한다(`pip install -r rag_latest/requirements-rerank.txt`). |
+| `agent_tool.py` | `search_news()` + `SEARCH_NEWS_TOOL_SCHEMA`로 LLM tool-use 루프에 검색을 노출한다. `retrieve()` → `rerank()` → 직렬화까지 한 번에 수행하고, `category`/`domains` enum은 `taxonomy.py`의 실제 값을 그대로 참조한다. |
+| `eval.py` | `rag_experiment`의 eval 스크립트 7개를 self-retrieval Recall@k/MRR 측정 하나로 통합했다. DB에 이미 색인된 기사 ID를 넘겨 `evaluate_self_retrieval(article_ids=[...], top_k_values=(5, 10))`로 직접 호출한다(별도 CLI 없음). |

@@ -34,10 +34,16 @@ class DistributorAgent(Agent):
                 self.tools["log_send"](state["digest_id"], "email", recipient, "failed", str(exc))
                 results.append({"recipient": recipient, "status": "failed", "error": str(exc)})
 
-        return {
+        success_count = sum(r["status"] == "success" for r in results)
+        output = {
             "send_result": {
                 "recipients": results,
-                "success_count": sum(r["status"] == "success" for r in results),
+                "success_count": success_count,
                 "total_count": len(results),
             }
         }
+        if results and success_count == 0:
+            # main.py의 run_digest()가 result["error"]를 보고 종료 코드를 결정하므로,
+            # 전원 발송 실패를 error로도 알려야 daily-digest가 조용히 "성공"으로 끝나지 않는다.
+            output["error"] = f"이메일 발송 전원 실패 ({len(results)}명)"
+        return output

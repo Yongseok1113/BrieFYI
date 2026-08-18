@@ -12,4 +12,4 @@ test_text.json
 
 .worktrees/
 .venv
-*.db
+pipeline.db
