@@ -2,7 +2,7 @@
 
 프롬프트 엔지니어링 기반 학습 데이터 생성 파이프라인. 설계 문서: `docs/data-pipeline-design.md`(레포 루트).
 
-파인튜닝하지 않은 기본 오픈모델(기본값 `Qwen/Qwen2.5-14B-Instruct`, Featherless AI provider로 HF 무료 서버리스 API 호출)을 사용해
+파인튜닝하지 않은 기본 오픈모델(기본값 Groq `llama-3.3-70b-versatile`, 카드 등록 없는 무료 티어)을 사용해
 뉴스 기사에서 insights/implications/category/domain/entity/event를 뽑아내고, 통합 단어 테이블로
 정규화한 뒤 `finetune/`의 학습 데이터로 export한다.
 

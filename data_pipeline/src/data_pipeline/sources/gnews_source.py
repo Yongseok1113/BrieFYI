@@ -3,6 +3,7 @@ data_pipeline은 별도 컨테이너라 자체 구현을 둔다).
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -31,7 +32,15 @@ class GNewsSource(DataSource):
             "sortby": "publishedAt",
             "apikey": config.GNEWS_API_KEY,
         }
-        resp = requests.get(config.GNEWS_BASE_URL, params=params, timeout=30)
+        # GNews 무료 플랜은 초당 1건 제한이라 순간적으로 몰리면 429가 난다.
+        # 한 번 정도는 잠깐 쉬었다가 재시도한다(일일 한도 초과인 403은 재시도해도
+        # 소용없으니 그대로 올린다).
+        for attempt in range(2):
+            resp = requests.get(config.GNEWS_BASE_URL, params=params, timeout=30)
+            if resp.status_code == 429 and attempt == 0:
+                time.sleep(2.0)
+                continue
+            break
         resp.raise_for_status()
         articles = resp.json().get("articles", [])
 

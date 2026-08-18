@@ -15,9 +15,9 @@ def _cmd_run(args: argparse.Namespace) -> None:
     from .sources.gnews_source import GNewsSource
 
     if args.stage == "all":
-        result = pipeline.run_all(limit=args.limit, do_ingest=not args.no_ingest)
+        result = pipeline.run_all(limit=args.limit, do_ingest=not args.no_ingest, keywords=args.keywords)
     elif args.stage == "ingest":
-        result = ingest.run_ingest(GNewsSource())
+        result = pipeline.run_ingest_multi(args.keywords) if args.keywords else ingest.run_ingest(GNewsSource())
     elif args.stage == "extract":
         result = extract.run_extract(args.limit)
     elif args.stage == "enrich":
@@ -48,6 +48,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--stage", default="all", choices=["all", "ingest", "extract", "enrich", "normalize"])
     run_parser.add_argument("--limit", type=int, default=None)
     run_parser.add_argument("--no-ingest", action="store_true", help="--stage all일 때 수집은 건너뛰기")
+    run_parser.add_argument(
+        "--keywords", nargs="+", default=None,
+        help="ingest/all 단계에서 여러 키워드로 나눠 수집 (예: --keywords 경제 산업 금융 기술)",
+    )
     run_parser.set_defaults(func=_cmd_run)
 
     synonyms_parser = subparsers.add_parser("synonyms", help="통합 단어 테이블 관리")

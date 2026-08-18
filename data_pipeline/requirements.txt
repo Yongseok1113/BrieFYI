@@ -5,7 +5,8 @@ python-dotenv>=1.0
 # 수집
 requests>=2.31
 
-# LLM (기본 hf, 선택 anthropic)
+# LLM (기본 groq, 선택 hf/anthropic)
+groq>=0.11
 huggingface_hub>=0.25
 anthropic>=0.34
 

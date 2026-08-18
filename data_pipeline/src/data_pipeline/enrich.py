@@ -59,7 +59,11 @@ def run_enrich(limit: int) -> dict:
                 raw_domain=result.get("domain", []),
                 raw_entity=result.get("entity", []),
                 raw_event=result.get("event", []),
-                model_used=config.HF_MODEL_ID if config.LLM_PROVIDER == "hf" else config.ANTHROPIC_MODEL,
+                model_used={
+                    "groq": config.GROQ_MODEL,
+                    "hf": config.HF_MODEL_ID,
+                    "anthropic": config.ANTHROPIC_MODEL,
+                }.get(config.LLM_PROVIDER, config.LLM_PROVIDER),
                 prompt_version=PROMPT_VERSION,
             )
             done += 1

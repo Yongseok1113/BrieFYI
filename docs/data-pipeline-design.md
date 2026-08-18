@@ -2,7 +2,7 @@
 
 `finetune/`이 요약 모델을 LoRA로 학습시키려면 (원문, 정답) 쌍이 충분히 필요하다. `finetune/src/summarize_ft/sources/digests_export.py`는 라이브 파이프라인이 Claude로 만든 `digests`를 재사용하지만, 볼륨을 늘리고 category/domain/entity/event 같은 풍부한 메타데이터까지 확보하려면 별도의 배치 파이프라인이 필요하다. 이 문서는 그 파이프라인(`data_pipeline/`)의 설계를 다룬다.
 
-핵심 결정: **파인튜닝되지 않은 기본 오픈모델**(예: Qwen3-8B-Instruct, Hugging Face 무료 서버리스 Inference API)에 프롬프트 엔지니어링으로 학습 데이터를 만든다. Claude API 비용/약관 이슈를 피하면서, `tools/hf_llm_client.py`와 동일한 방식으로 모델을 "이름으로" 호출한다.
+핵심 결정: **파인튜닝되지 않은 기본 오픈모델**(기본값: Groq `llama-3.3-70b-versatile`, 카드 등록 없는 무료 티어)에 프롬프트 엔지니어링으로 학습 데이터를 만든다. Claude API 비용/약관 이슈를 피하면서 모델을 "이름으로" 호출한다. 처음엔 HF Inference Providers를 검토했으나 무료 계정 크레딧이 월 $0.10뿐이고 카드 등록 없인 라우팅 자체가 막혀 있어(§7 참고) Groq로 전환했다 — `llm_client.py`에 `hf`/`anthropic` 경로도 남아 있어 `DATA_PIPELINE_LLM_PROVIDER`로 전환 가능하다.
 
 ## 1. 전체 흐름
 
@@ -76,7 +76,7 @@ category/domain/entity/event 네 개 차원(dimension)마다 원시값들을 모
 
 ## 7. 요청 제한 준수
 
-HF 무료 서버리스 API는 시간당 요청 수 제한(수백 건/시간 수준, 변동 가능)이 있다. `rate_limiter.py`가 설정된 요청/시간 한도를 지키는 슬라이딩 윈도우 리미터를 제공하고, 모든 LLM 호출(`llm_client.py`)이 이를 거쳐 나가도록 한다. 429 응답은 지수 백오프로 재시도하고, 한도 초과가 계속되면 그 배치를 중단하고 `pipeline_status`를 그대로 둔 채(진행된 만큼만 반영) 다음 실행에서 이어가게 한다.
+Groq 무료 티어는 카드 등록 없이 30 req/min · 6,000 tokens/min · 14,400 req/day 한도를 준다. `rate_limiter.py`가 설정된 요청/시간 한도(기본값: 25 req/60s, 안전 마진 포함)를 지키는 슬라이딩 윈도우 리미터를 제공하고, 모든 LLM 호출(`llm_client.py`)이 이를 거쳐 나가도록 한다. 429 응답은 지수 백오프로 재시도하고, 한도 초과가 계속되면 그 배치를 중단하고 `pipeline_status`를 그대로 둔 채(진행된 만큼만 반영) 다음 실행에서 이어가게 한다. rate_limiter는 요청 수만 세고 토큰 수는 안 세므로, 응답이 긴 프롬프트를 대량으로 돌릴 땐 TPM(6,000/min) 한도에 먼저 걸릴 수 있다는 점은 감안할 것.
 
 LLM 호출은 최대 2단계(변형2, 그리고 변형3의 fallback)로 억제된다 — 변형1은 구조화 소스면 호출이 없고, 정규화는 fuzzy match가 대부분 처리해 LLM은 못 찾은 것만 부른다.
 

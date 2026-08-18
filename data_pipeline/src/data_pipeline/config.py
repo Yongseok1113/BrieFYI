@@ -37,34 +37,44 @@ class Config:
     NEWS_MAX_RESULTS = int(os.getenv("NEWS_MAX_RESULTS", "10"))
 
     # LLM (변형2 enrich, 변형3 normalize fallback). 파인튜닝 안 한 기본 모델을
-    # HF 무료 서버리스 API로 호출하는 것이 기본 전제다 — Claude 비용/약관을 피하기 위함.
+    # 프롬프트 엔지니어링만으로 호출하는 게 기본 전제다 — Claude 비용/약관을 피하기 위함.
+    #
+    # 기본값을 Groq로 전환했다: HF Inference Providers는 무료 계정 기준 월 $0.10
+    # 크레딧뿐이고 그마저 카드 등록이 있어야 라우팅이 열려서(등록 안 하면 provider를
+    # 명시해도 model_not_supported로 거부됨) 실제 파이프라인 운영엔 못 쓴다. Groq
+    # 무료 티어는 카드 등록 없이 30 req/min·6000 tokens/min·14400 req/day를 준다 —
+    # 이 파이프라인 규모엔 이쪽이 실질적으로 더 "무료"다.
+    DATA_PIPELINE_LLM_PROVIDER = os.getenv("DATA_PIPELINE_LLM_PROVIDER", "groq")  # "groq" | "hf" | "anthropic"
+
+    # Groq (기본값)
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    DATA_PIPELINE_GROQ_MODEL = os.getenv("DATA_PIPELINE_GROQ_MODEL", "llama-3.3-70b-versatile")
+
+    # HF (DATA_PIPELINE_LLM_PROVIDER=hf로 바꿨을 때만 쓰는 대체 경로 — 위 이유로 기본값 아님)
     # HF_API_TOKEN은 메인 앱(tools/hf_llm_client.py)과 공유해서 쓰지만, 모델 ID는
     # 반드시 분리한다 — 메인 앱의 HF_MODEL_ID는 "직접 파인튜닝해 push한 모델"을
     # 가리키고, 여기는 "학습 데이터를 만들 때 쓰는 파인튜닝 안 한 베이스 모델"을
     # 가리켜서 목적이 다르다. 같은 이름을 쓰면 둘 중 하나가 의도치 않게 덮어써진다.
-    DATA_PIPELINE_LLM_PROVIDER = os.getenv("DATA_PIPELINE_LLM_PROVIDER", "hf")  # "hf" | "anthropic"
     HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
-    # Qwen2.5-14B-Instruct: Featherless provider로 실제 서빙 확인된 모델 중 Qwen3-8B보다
-    # 큰 무료 옵션. DeepSeek-V4-Flash 등 더 강한 모델도 있지만 :novita 같은 특정 provider로
-    # 붙이면 토큰당 소액 과금이 생겨(무료 아님) — 무료 유지가 목적이면 이 모델을 쓴다.
-    # provider 배치는 라이브 상태라 바뀔 수 있다 — 안 되면 모델 페이지의 Inference
-    # Providers 위젯에서 실제 서빙 중인 다른 모델로 바꿀 것.
     DATA_PIPELINE_HF_MODEL_ID = os.getenv("DATA_PIPELINE_HF_MODEL_ID", "Qwen/Qwen2.5-14B-Instruct")
     # HF의 Inference Providers 자동 라우팅("auto")이 계정에 활성화 안 된 provider로
     # 잘못 붙으려다 model_not_supported로 실패하는 걸 겪어서, provider를 명시적으로
     # 고정한다. https://huggingface.co/settings/inference-providers 에서 활성화한
-    # provider와 이 값이 일치해야 한다 (지금은 Featherless AI 활성화 확인됨).
+    # provider와 이 값이 일치해야 한다.
     DATA_PIPELINE_HF_PROVIDER = os.getenv("DATA_PIPELINE_HF_PROVIDER", "featherless-ai")
+
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
     # 하위 호환용 별칭 (llm_client.py 등 내부 코드는 짧은 이름을 쓴다)
     LLM_PROVIDER = DATA_PIPELINE_LLM_PROVIDER
+    GROQ_MODEL = DATA_PIPELINE_GROQ_MODEL
     HF_MODEL_ID = DATA_PIPELINE_HF_MODEL_ID
 
-    # 요청 제한 (7절). HF 무료 티어는 계정/모델별로 변동이 있어 파일럿 실행 중 조정 필요.
-    RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "250"))
-    RATE_LIMIT_WINDOW_SECONDS = float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "3600"))
+    # 요청 제한 (7절). Groq 무료 티어(30 req/min)에 안전 마진을 두고 기본값을 잡았다 —
+    # 다른 provider로 바꾸면 .env에서 재조정할 것.
+    RATE_LIMIT_MAX_REQUESTS = int(os.getenv("RATE_LIMIT_MAX_REQUESTS", "25"))
+    RATE_LIMIT_WINDOW_SECONDS = float(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
     LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "5"))
 
     # 키워드 추출 (변형1, 로컬 전용 — API 호출 아님)
