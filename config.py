@@ -38,6 +38,17 @@ class Config:
     # Discord (백로그 #9, tools/discord_send.py)
     DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
+    # Groq (rag_latest/summarize_agent.py 빌드/개발 단계 기본 provider. data_pipeline과
+    # 같은 GROQ_API_KEY를 공유하되 모델명은 별도 변수로 둔다 — data_pipeline은 완전히
+    # 별도 config.py를 쓰므로 이름 충돌 없음)
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+    # rag_latest/summarize_agent.py 재시도 루프 설정
+    RAG_SUMMARIZE_PROVIDER = os.getenv("RAG_SUMMARIZE_PROVIDER", "groq")  # "groq" | "anthropic"
+    RAG_SUMMARIZE_MAX_ATTEMPTS = int(os.getenv("RAG_SUMMARIZE_MAX_ATTEMPTS", "3"))
+    RAG_SUMMARIZE_SCORE_THRESHOLD = float(os.getenv("RAG_SUMMARIZE_SCORE_THRESHOLD", "70"))
+
     # 파이프라인 파라미터
     NEWS_KEYWORD = os.getenv("NEWS_KEYWORD", "AI")
     NEWS_LOOKBACK_DAYS = int(os.getenv("NEWS_LOOKBACK_DAYS", "1"))
