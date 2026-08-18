@@ -101,6 +101,35 @@ class SummarizeWithVerificationTest(unittest.TestCase):
         self.assertEqual(result.attempts[0].judge_score, 0)
         self.assertTrue(result.passed)
 
+    def test_judge가_리스트를_반환해도_루프가_죽지_않는다(self):
+        responses = [
+            '{"summary": "요약1", "citations": []}',
+            '{"passed": true, "issues": []}',
+            '[1, 2, 3]',  # dict가 아닌 JSON — .get()이 AttributeError
+            '{"summary": "요약2", "citations": []}',
+            '{"passed": true, "issues": []}',
+            '{"score": 90, "reasoning": "좋음", "breakdown": {}}',
+        ]
+        with patch("rag_latest.summarize_agent.call_llm", side_effect=responses), \
+             patch("rag_latest.summarize_agent.save_agent_run"):
+            result = summarize_with_verification("질의", CHUNKS, max_attempts=3, score_threshold=70)
+
+        self.assertEqual(len(result.attempts), 2)
+        self.assertFalse(result.attempts[0].passed_threshold)
+        self.assertTrue(result.passed)
+
+    def test_score가_100을_넘으면_100으로_클램프된다(self):
+        responses = [
+            '{"summary": "요약1", "citations": []}',
+            '{"passed": true, "issues": []}',
+            '{"score": 150, "reasoning": "과도한 점수", "breakdown": {}}',
+        ]
+        with patch("rag_latest.summarize_agent.call_llm", side_effect=responses), \
+             patch("rag_latest.summarize_agent.save_agent_run"):
+            result = summarize_with_verification("질의", CHUNKS, max_attempts=3, score_threshold=70)
+
+        self.assertEqual(result.final.judge_score, 100.0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -73,11 +73,9 @@ def _candidate_groups(
 
     for i in range(n):
         pub_i = articles[i].get("published_at")
-        if pub_i is None:
-            continue
         for j in range(i + 1, n):
             pub_j = articles[j].get("published_at")
-            if pub_j is None or abs(pub_i - pub_j) > window:
+            if abs(pub_i - pub_j) > window:
                 continue
             if _jaccard(entity_sets[i], entity_sets[j]) >= jaccard_threshold:
                 union(i, j)
@@ -103,6 +101,9 @@ def _refine_by_embedding(indices: list[int], embeddings: list[list[float]], thre
         if best is not None and best_score >= threshold:
             best["members"].append(idx)
         else:
+            # "centroid"라 부르지만 첫 멤버의 원본 벡터를 그대로 쓰고 갱신하지 않는다
+            # (data_pipeline/clustering.py의 그리디 canonical 패턴과 동일). 진짜 평균
+            # centroid를 재계산하는 _merge_near_duplicates()의 같은 이름과 혼동하지 말 것.
             sub_clusters.append({"members": [idx], "centroid": vec})
     return [sc["members"] for sc in sub_clusters]
 
@@ -165,8 +166,9 @@ def cluster_articles(
     개별 사건으로서는 고립돼 있어 단발성 후보로 취급하는 게 맞기 때문이다.
     """
     dated = [a for a in articles if a.get("published_at") is not None]
+    undated = [a for a in articles if a.get("published_at") is None]
     if not dated:
-        return [], list(articles)
+        return [], undated
 
     entity_sets = [set(entity_fn(a)[0]) for a in dated]
     texts = [_article_text(a) for a in dated]
@@ -206,5 +208,5 @@ def cluster_articles(
             if window_type == "narrow":
                 clustered_indices.update(group)
 
-    unclustered = [dated[i] for i in range(len(dated)) if i not in clustered_indices]
+    unclustered = [dated[i] for i in range(len(dated)) if i not in clustered_indices] + undated
     return all_clusters, unclustered

@@ -95,3 +95,13 @@ def test_근접중복_클러스터는_병합된다():
     narrow = [c for c in clusters if c.window_type == "narrow"]
     assert len(narrow) == 1
     assert {a["id"] for a in narrow[0].articles} == {1, 2, 3, 4}
+
+
+def test_날짜_없는_기사는_unclustered에_포함된다():
+    articles = [
+        _article(1, "NVIDIA 공급 확대", BASE_TIME, ["NVIDIA"]),
+        {"id": 2, "title": "날짜 없는 기사", "description": "", "published_at": None, "entity": None, "event": None},
+    ]
+    embed_fn = _make_embed_fn({"NVIDIA 공급 확대": [1.0, 0.0]})
+    clusters, unclustered = cluster_articles(articles, embed_fn=embed_fn, **DEFAULT_KWARGS)
+    assert {a["id"] for a in unclustered} == {1, 2}

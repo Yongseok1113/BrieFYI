@@ -15,3 +15,5 @@ python scripts/check_env.py
 python -m summarize_ft.train --config configs/smoke.yaml   # 스모크 테스트
 pytest tests
 ```
+
+`make_train_data`는 `finetune/` 디렉터리에서 실행해야 한다: `cd finetune && python -m make_train_data.cli run`.

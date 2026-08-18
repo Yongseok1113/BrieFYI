@@ -43,8 +43,8 @@ class SummarizeResult:
     attempts: list[AttemptResult]
 
     @property
-    def final(self) -> AttemptResult:
-        return self.attempts[-1]
+    def final(self) -> AttemptResult | None:
+        return self.attempts[-1] if self.attempts else None
 
     @property
     def passed(self) -> bool:
@@ -64,11 +64,14 @@ def _run_one_attempt(query: str, chunks: list[dict], provider: str, score_thresh
 
         judge_raw = call_llm(JUDGE_SYSTEM_PROMPT, build_judge_user_prompt(query, summary, grounding), provider=provider)
         judge = parse_json_response(judge_raw)
-    except (LLMError, KeyError, ValueError, TypeError):
+
+        grounding_passed = bool(grounding.get("passed", False))
+        # judge_score DB 컬럼이 CHECK (judge_score BETWEEN 0 AND 100)이라, judge가 범위
+        # 밖 값을 반환해도(예: 120) DB insert에서 죽지 않도록 여기서 클램프한다.
+        score = max(0.0, min(100.0, float(judge.get("score", 0))))
+    except (LLMError, KeyError, ValueError, TypeError, AttributeError):
         return None
 
-    grounding_passed = bool(grounding.get("passed", False))
-    score = float(judge.get("score", 0))
     return AttemptResult(
         attempt_number=0,  # 호출부가 채운다
         summary=summary,

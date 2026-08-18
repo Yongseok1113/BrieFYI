@@ -1,6 +1,10 @@
 """make_train_data 파이프라인 진입점.
 
-    python -m make_train_data.cli run --out-dir finetune/make_train_data/output --since 2026-08-01
+이 CLI는 `finetune/` 디렉터리에서 실행해야 한다 — `python -m pkg`는 CWD를 sys.path에
+추가하는데, make_train_data 패키지가 finetune/ 아래 있기 때문이다.
+
+    cd finetune
+    python -m make_train_data.cli run --out-dir make_train_data/output --since 2026-08-01
 """
 from __future__ import annotations
 
@@ -54,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     run_parser = subparsers.add_parser("run", help="DB에서 기사를 읽어 군집 파일을 생성한다")
-    run_parser.add_argument("--out-dir", type=Path, default=Path("finetune/make_train_data/output"))
+    run_parser.add_argument("--out-dir", type=Path, default=Path("make_train_data/output"))
     run_parser.add_argument("--since", default=None, help="이 날짜(YYYY-MM-DD) 이후 기사만 대상")
     return parser
 
