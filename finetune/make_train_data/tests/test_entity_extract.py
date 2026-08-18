@@ -35,3 +35,9 @@ def test_description도_함께_검사한다():
     article = {"title": "업계 동향", "description": "삼성전자가 신규 라인을 발표했다", "entity": None}
     entities, _, _ = extract(article)
     assert entities == ["Samsung"]
+
+
+def test_긴_별칭이_매칭되면_포함된_짧은_별칭은_중복으로_안_잡힌다():
+    article = {"title": "Google DeepMind announces breakthrough", "description": "", "entity": None}
+    entities, _, _ = extract(article)
+    assert entities == ["Google DeepMind"]

@@ -42,4 +42,5 @@ def extract(article: dict) -> tuple[list[str], str | None, list[str]]:
     for alias, canonical in _ALIASES_BY_LENGTH:
         if alias in remaining and canonical not in found:
             found.append(canonical)
+            remaining = remaining.replace(alias, "")
     return sorted(found), None, []
