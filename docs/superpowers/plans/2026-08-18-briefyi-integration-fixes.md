@@ -1305,7 +1305,14 @@ git commit -m "feat(rag_latest): rag_experiment eval 스크립트 7개를 self-r
 ```bash
 python -m unittest discover -t .                                    # 루트 + rag/tests (rag/는 안 건드렸으므로 기존과 동일해야 함)
 python -m unittest discover -s rag_latest/tests -t . -p "test_*.py"  # 신규
-.venv/bin/python -m pytest data_pipeline/tests finetune/tests -q     # 둘 다 전부 통과해야 함 (기존 각 1건 실패 -> 0건)
+.venv/bin/python -m pytest data_pipeline/tests -q                    # 전부 통과해야 함 (기존 1건 실패 -> 0건)
+.venv/bin/python -m pytest finetune/tests -q                         # 전부 통과해야 함 (기존 1건 실패 -> 0건)
 ```
+
+**주의:** `data_pipeline/tests`와 `finetune/tests`를 **같은 pytest 명령에 함께** 넘기지 않는다 — 두
+디렉터리 모두 `tests`라는 동일한 이름의 테스트 패키지를 갖고 있어, 한 번의 pytest 실행에 같이
+넘기면 `ModuleNotFoundError: No module named 'tests.test_xxx'`류의 모듈 이름 충돌로 수집 자체가
+실패한다(각 프로젝트의 `pyproject.toml`이 별도 rootdir로 실행될 때만 올바르게 동작). 항상 위처럼
+디렉터리별로 따로 실행한다.
 
 Expected: 이 계획 시작 시점 대비 새로 깨진 테스트가 없고(§project-status 문서의 `errors=12`가 pgvector 재빌드로 해소됐다면 0), `finetune`/`data_pipeline`은 각각 100% 통과로 바뀌어 있어야 한다.
