@@ -1,0 +1,26 @@
+# make_train_data 골드셋(n=15, 클러스터 2 + 단발성 13)으로 insight task를 스모크 테스트하는 설정.
+# 정식 QLoRA 학습(configs/qlora_*.yaml)이 아니라, "학습 데이터 생성 -> 실제 학습"이
+# 엔드투엔드로 도는지 확인하는 용도다. 6GB급 로컬 GPU에서 돌리기 위해 base_model을
+# 초소형(Qwen3-0.6B)으로 잡았다 -- configs/smoke.yaml과 같은 전략.
+#   python -m summarize_ft.train --config finetune/configs/smoke_insight.yaml
+base_model: Qwen/Qwen3-0.6B
+task: insight
+quantization: none
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.0
+train:
+  learning_rate: 1.0e-4
+  epochs: 3
+  effective_batch_size: 4
+  max_seq_len: 768
+  lr_scheduler: constant
+  save_strategy: steps
+  save_steps: 20
+  seed: 42
+data:
+  train_path: finetune/data/processed/insight_train.jsonl
+  val_path: finetune/data/processed/insight_val.jsonl
+  data_version: make_train_data_gold_v1
+output_dir: runs/smoke-insight-make_train_data

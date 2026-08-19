@@ -1,0 +1,24 @@
+{
+  "cluster_id": "c_narrow_82",
+  "window_type": "narrow",
+  "no_strong_insight_hint": false,
+  "entities": [],
+  "event_type": null,
+  "articles": [
+    {
+      "title": "Global AI investment $1 tln in 2026, to reach 1.4 pc global GDP by 2028: Goldman Sachs",
+      "description": "Global investment in artificial intelligence is projected to reach around $1 trillion in 2026, with AI-related capital expenditure expected to remain robust in the near term, according to Goldman Sachs Research. The investment is forecast to rise from 0.9 per cent of global GDP in 2026 to 1.3 per cent in 2027 and 1.4 per cent in 2028, suggesting that the AI buildout could continue to support capital spending over the next two years.",
+      "source": "ANI (Asian News International)",
+      "published_at": "2026-08-16 05:21:04+00:00",
+      "url": "https://www.aninews.in/news/business/global-ai-investment-1-tln-in-2026-to-reach-14-pc-global-gdp-by-2028-goldman-sachs20260816105104/"
+    },
+    {
+      "title": "Global AI investment $1 tln in 2026, to reach 1.4 pc global GDP by 2028: Goldman Sachs",
+      "description": "Global investment in artificial intelligence is projected to reach around $1 trillion in 2026, with AI-related capital expenditure expected to remain robust in the near term, according to Goldman Sachs Research. The investment is forecast to rise from 0.9 per cent of global GDP in 2026 to 1.3 per cent in 2027 and 1.4 per cent in 2028, suggesting that the AI buildout could continue to support capital spending over the next two years.",
+      "source": "The Tribune",
+      "published_at": "2026-08-16 05:23:12+00:00",
+      "url": "https://www.tribuneindia.com/news/business/global-ai-investment-1-tln-in-2026-to-reach-1-4-pc-global-gdp-by-2028-goldman-sachs/"
+    }
+  ],
+  "claude_prompt": "다음 기사 묶음이 정말 같은 사건/테마를 다루는지 먼저 확인해줘. 다루지 않는다면 어떻게 나눠야 하는지 알려줘. 같은 사건/테마가 맞다면, facts/insights(전략적_의도|모순_긴장|선행지표|이해관계자_영향|시장_신호|리스크_기회 중 최소 2종 이상 시도, 억지로 6종 다 채우지 않음)/no_strong_insight를 판단해서 아래 스키마로 답해줘.\n\n{\"facts\": [\"...\"], \"insights\": [{\"claim\": \"...\", \"type\": \"...\", \"evidence\": [\"...\"], \"confidence\": \"high|medium|low\", \"reasoning\": \"...\"}], \"no_strong_insight\": false}\n\n추가로 이 클러스터에 대해 종합적 판단을 요구하는 테스트용 질문과 모범 답안도 하나 만들어줘."
+}

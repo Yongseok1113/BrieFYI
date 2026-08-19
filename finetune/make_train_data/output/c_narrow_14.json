@@ -1,0 +1,26 @@
+{
+  "cluster_id": "c_narrow_14",
+  "window_type": "narrow",
+  "no_strong_insight_hint": false,
+  "entities": [
+    "NVIDIA"
+  ],
+  "event_type": null,
+  "articles": [
+    {
+      "title": "[AI MY 뉴스] 뉴욕 반도체주 프리뷰...美 금리·유가 급등에 반도체주 '...",
+      "description": "AI 반도체 대장주 엔비디아(NVDA)도 2% 안팎 하락하면서 업종 전반의 약세를 피하지 못하고 있다. 광통신·AI 인프라 관련주도 약세다. 코히런트(COHR)는 개장 전 거래에서 약 7% 급락했다. 코히런트는 전날 7.8% 급등했지만...",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 13:24:00+00:00",
+      "url": "https://www.newspim.com/news/view/20260818001291"
+    },
+    {
+      "title": "AI주 약세 뉴욕증시 하락 출발…나스닥 1.2%↓·채권금리 상승 부담",
+      "description": "S&P500 구성 종목 가운데 상당수는 상승했지만 시가총액 비중이 큰 AI·반도체 관련주의 낙폭이 지수를 끌어내렸다. 특히 엔비디아와 마이크론 테크놀로지 등이 약세를 보였다. AI 투자 열풍을 타고 주가가 빠르게 오른...",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 13:46:00+00:00",
+      "url": "https://www.thefairnews.co.kr/news/articleView.html?idxno=85408"
+    }
+  ],
+  "claude_prompt": "다음 기사 묶음이 정말 같은 사건/테마를 다루는지 먼저 확인해줘. 다루지 않는다면 어떻게 나눠야 하는지 알려줘. 같은 사건/테마가 맞다면, facts/insights(전략적_의도|모순_긴장|선행지표|이해관계자_영향|시장_신호|리스크_기회 중 최소 2종 이상 시도, 억지로 6종 다 채우지 않음)/no_strong_insight를 판단해서 아래 스키마로 답해줘.\n\n{\"facts\": [\"...\"], \"insights\": [{\"claim\": \"...\", \"type\": \"...\", \"evidence\": [\"...\"], \"confidence\": \"high|medium|low\", \"reasoning\": \"...\"}], \"no_strong_insight\": false}\n\n추가로 이 클러스터에 대해 종합적 판단을 요구하는 테스트용 질문과 모범 답안도 하나 만들어줘."
+}

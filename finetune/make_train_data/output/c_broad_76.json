@@ -1,0 +1,24 @@
+{
+  "cluster_id": "c_broad_76",
+  "window_type": "broad",
+  "no_strong_insight_hint": false,
+  "entities": [],
+  "event_type": null,
+  "articles": [
+    {
+      "title": "\"Je t’ai respecté et tu m’as pris pour un con\", un détenu de 21 ans condamné à dix mois de prison pour insultes et dégradations en cellule",
+      "description": "Au tribunal de Tarbes, un détenu de 21 ans a été condamné à dix mois de prison pour dégradations et insultes envers sa conseillère en réinsertion, jeudi 13 août. Déjà incarcéré...",
+      "source": "La Dépêche",
+      "published_at": "2026-08-16 05:01:06+00:00",
+      "url": "https://www.ladepeche.fr/2026/08/16/je-tai-respecte-et-tu-mas-pris-pour-un-con-un-detenu-de-21-ans-condamne-a-dix-mois-de-prison-pour-insultes-et-degradations-en-cellule-13507927.php"
+    },
+    {
+      "title": "\"Je t’ai respecté et tu m’as pris pour un con\", un détenu de 21 ans condamné à dix mois de prison pour insultes et dégradations en cellule",
+      "description": "Au tribunal de Tarbes, un détenu de 21 ans a été condamné à dix mois de prison pour dégradations et insultes envers sa conseillère en réinsertion, jeudi 13 août. Déjà incarcéré...",
+      "source": "La Nouvelle Republique Des Pyrénées",
+      "published_at": "2026-08-16 05:01:06+00:00",
+      "url": "https://www.nrpyrenees.fr/2026/08/16/je-tai-respecte-et-tu-mas-pris-pour-un-con-un-detenu-de-21-ans-condamne-a-dix-mois-de-prison-pour-insultes-et-degradations-en-cellule-13507927.php"
+    }
+  ],
+  "claude_prompt": "다음 기사 묶음이 정말 같은 사건/테마를 다루는지 먼저 확인해줘. 다루지 않는다면 어떻게 나눠야 하는지 알려줘. 같은 사건/테마가 맞다면, facts/insights(전략적_의도|모순_긴장|선행지표|이해관계자_영향|시장_신호|리스크_기회 중 최소 2종 이상 시도, 억지로 6종 다 채우지 않음)/no_strong_insight를 판단해서 아래 스키마로 답해줘.\n\n{\"facts\": [\"...\"], \"insights\": [{\"claim\": \"...\", \"type\": \"...\", \"evidence\": [\"...\"], \"confidence\": \"high|medium|low\", \"reasoning\": \"...\"}], \"no_strong_insight\": false}\n\n추가로 이 클러스터에 대해 종합적 판단을 요구하는 테스트용 질문과 모범 답안도 하나 만들어줘."
+}

@@ -24,13 +24,31 @@ def test_invalid_task_raises(summarize_example):
 
 
 def test_insight_count_out_of_range_raises(insight_example):
-    insight_example["output"]["insights"] = insight_example["output"]["insights"][:2]  # 2개 -> 3~5 위반
+    insight_example["output"]["insights"] = insight_example["output"]["insights"][:1]  # 1개 -> 2~5 위반
     with pytest.raises(SchemaError):
         validate_example(insight_example)
 
 
+def test_insight_count_two_passes(insight_example):
+    # make_train_data(cluster_export.py)는 "최소 2종 이상 시도"만 요구하므로 2개도 유효해야 함
+    insight_example["output"]["insights"] = insight_example["output"]["insights"][:2]
+    validate_example(insight_example)  # 예외 없이 통과해야 함
+
+
 def test_insight_missing_source_url_raises(insight_example):
     del insight_example["output"]["insights"][0]["source_url"]
+    with pytest.raises(SchemaError):
+        validate_example(insight_example)
+
+
+def test_insight_zero_with_no_strong_insight_flag_passes(insight_example):
+    insight_example["output"]["insights"] = []
+    insight_example["output"]["no_strong_insight"] = True
+    validate_example(insight_example)  # 예외 없이 통과해야 함 (make_train_data calibration 예제)
+
+
+def test_insight_zero_without_flag_raises(insight_example):
+    insight_example["output"]["insights"] = []
     with pytest.raises(SchemaError):
         validate_example(insight_example)
 
@@ -74,6 +92,6 @@ def test_enrich_domain_must_be_list(enrich_example):
 
 
 def test_enrich_reuses_insight_count_check(enrich_example):
-    enrich_example["output"]["insights"] = enrich_example["output"]["insights"][:2]
+    enrich_example["output"]["insights"] = enrich_example["output"]["insights"][:1]
     with pytest.raises(SchemaError):
         validate_example(enrich_example)

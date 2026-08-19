@@ -50,6 +50,13 @@ def _generate(model: Any, tokenizer: Any, messages: list[dict[str, str]], *, max
 
 def _parse_json_output(text: str) -> dict[str, Any]:
     text = text.strip()
+    # Qwen3 등 하이브리드 추론 모델은 답변 앞에 <think>...</think> 블록을 붙여서 낸다
+    # (스모크 테스트에서 실제로 관찰됨). 빈 think 블록이든 내용이 있는 think 블록이든
+    # 답변 JSON 앞부분에 오므로 통째로 제거한다.
+    if text.startswith("<think>"):
+        end = text.find("</think>")
+        if end != -1:
+            text = text[end + len("</think>"):].strip()
     # tools/summarize.py, tools/insight.py와 동일하게 코드펜스가 섞여 나오는 경우를 방어한다.
     if text.startswith("```"):
         text = text.strip("`")

@@ -1,0 +1,31 @@
+{
+  "cluster_id": "c_narrow_149",
+  "window_type": "narrow",
+  "no_strong_insight_hint": false,
+  "entities": [],
+  "event_type": null,
+  "articles": [
+    {
+      "title": "울산경찰, 치안 업무 AI 활용 현장 대응력 강화",
+      "description": "울산경찰청은 18일 생성형 AI를 치안 업무에 효과적으로 활용한 직원을 선발·포상하는 우수사례 행사를 개최했다. 울산경찰은 올해 초 AI 활용 역량 강화 계획을 수립한 뒤 울산정보산업진흥원과 업무협약(MOU)을 체결하고...",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 12:43:00+00:00",
+      "url": "https://www.ulsanpress.net/news/articleView.html?idxno=581243"
+    },
+    {
+      "title": "울산 경찰관, AI 활용 아이디어 '눈에 띄네'",
+      "description": "울산경찰청은 18일 생성형 AI를 치안 업무에 효과적으로 활용한 직원을 선발·포상하는 행사를 열었다. 울산경찰은 올해 초 AI 활용 역량 강화 계획을 수립하고 울산정보산업진흥원과 업무협약을 체결했다. 이후 AI 활용...",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 13:32:00+00:00",
+      "url": "http://www.ujeil.com/news/articleView.html?idxno=390549"
+    },
+    {
+      "title": "울산경찰청, 치안업무 AI 활용 우수사례 포상",
+      "description": "▲ 울산경찰청은 생성형 인공지능(AI)을 치안 업무에 효과적으로 활용한 사례를 선발해 포상했다고 18일 밝혔다. 울산경찰청은 생성형 인공지능(AI)을 치안 업무에 효과적으로 활용한 사례를 선발해 포상했다고 18일...",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 15:02:00+00:00",
+      "url": "https://www.ksilbo.co.kr/news/articleView.html?idxno=1064815"
+    }
+  ],
+  "claude_prompt": "다음 기사 묶음이 정말 같은 사건/테마를 다루는지 먼저 확인해줘. 다루지 않는다면 어떻게 나눠야 하는지 알려줘. 같은 사건/테마가 맞다면, facts/insights(전략적_의도|모순_긴장|선행지표|이해관계자_영향|시장_신호|리스크_기회 중 최소 2종 이상 시도, 억지로 6종 다 채우지 않음)/no_strong_insight를 판단해서 아래 스키마로 답해줘.\n\n{\"facts\": [\"...\"], \"insights\": [{\"claim\": \"...\", \"type\": \"...\", \"evidence\": [\"...\"], \"confidence\": \"high|medium|low\", \"reasoning\": \"...\"}], \"no_strong_insight\": false}\n\n추가로 이 클러스터에 대해 종합적 판단을 요구하는 테스트용 질문과 모범 답안도 하나 만들어줘."
+}

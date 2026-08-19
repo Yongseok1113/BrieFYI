@@ -1,0 +1,25 @@
+# make_train_data 골드셋 v3 (n=135: v1 15 + v2 59 + v3 네이버 확장 61)로 insight task
+# 재학습. v2(n=74, 74% no_strong_insight)에서 모델이 다수 클래스로 수렴한 문제를 클래스
+# 비율 개선(60:40)과 데이터 3배 확대로 완화하려는 시도.
+#   python -m summarize_ft.train --config finetune/configs/smoke_insight_1.7b_v3.yaml
+base_model: Qwen/Qwen3-1.7B
+task: insight
+quantization: none
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.0
+train:
+  learning_rate: 1.0e-4
+  epochs: 4
+  effective_batch_size: 4
+  max_seq_len: 768
+  lr_scheduler: constant
+  save_strategy: steps
+  save_steps: 50
+  seed: 42
+data:
+  train_path: finetune/data/processed/insight_train.jsonl
+  val_path: finetune/data/processed/insight_val.jsonl
+  data_version: make_train_data_gold_v3_n135
+output_dir: runs/smoke-insight-1.7b-v3-naver

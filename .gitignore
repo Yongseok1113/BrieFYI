@@ -13,3 +13,5 @@ test_text.json
 .worktrees/
 .venv
 pipeline.db
+
+runs

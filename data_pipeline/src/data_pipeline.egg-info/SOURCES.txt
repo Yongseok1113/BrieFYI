@@ -21,8 +21,11 @@ src/data_pipeline.egg-info/top_level.txt
 src/data_pipeline/sources/__init__.py
 src/data_pipeline/sources/base.py
 src/data_pipeline/sources/gnews_source.py
+src/data_pipeline/sources/naver_source.py
 tests/test_clustering.py
 tests/test_config.py
 tests/test_keywords.py
+tests/test_llm_client.py
+tests/test_naver_source.py
 tests/test_normalize.py
 tests/test_rate_limiter.py

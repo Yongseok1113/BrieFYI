@@ -160,10 +160,28 @@ def validate_example(d: dict, *, strict_id: bool = False) -> None:
 
     if task in ("insight", "enrich"):
         insights = output.get("insights")
-        if not isinstance(insights, list) or not (3 <= len(insights) <= 5):
+        if not isinstance(insights, list):
+            raise SchemaError(f"insights는 배열이어야 함, got {type(insights)}")
+        # make_train_data의 환각 방지 calibration 예제(단발성 사실 기사)는 억지로 인사이트를
+        # 채우지 않고 insights=[]로 두는 대신 output.no_strong_insight=True를 명시해야 한다.
+        # 그 표시 없이 0개면 아래 기준(2~5개) 위반으로 취급한다.
+        #
+        # 하한을 3이 아니라 2로 잡은 이유: tools/insight.py(digests 기반) 프롬프트는 자체적으로
+        # "3~5개"를 요청하므로 실제로는 항상 3개 이상 나온다 -- 그쪽 동작은 이 하한과 무관하다.
+        # 반면 make_train_data(cluster_export.py)의 claude_prompt는 "최소 2종 이상 시도, 억지로
+        # 6종 다 채우지 않음"이라고 명시한다. 하한을 3으로 두면 클러스터 기반 골드셋 생성 시
+        # 근거 없는 3번째 인사이트를 억지로 채워야 해서, 오히려 이 스키마가 막으려는 문제
+        # (근거 부족한 인사이트 강제 생성)를 유발한다. 그래서 2~5로 완화했다.
+        if len(insights) == 0:
+            if not output.get("no_strong_insight"):
+                raise SchemaError(
+                    "insights가 0개면 output.no_strong_insight=True여야 함 "
+                    "(그 외의 경우 2~5개, evaluate.py 2단계 구조 검증과 동일 기준)"
+                )
+        elif not (2 <= len(insights) <= 5):
             raise SchemaError(
-                f"insight 개수는 3~5개여야 함 (evaluate.py 2단계 구조 검증과 동일 기준), got "
-                f"{len(insights) if isinstance(insights, list) else type(insights)}"
+                f"insight 개수는 0개(no_strong_insight=True) 또는 2~5개여야 함, got "
+                f"{len(insights)}"
             )
         for item in insights:
             if not isinstance(item, dict) or "source_url" not in item:

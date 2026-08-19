@@ -1,0 +1,296 @@
+{
+  "cluster_id": "c_onefact_batch",
+  "window_type": "narrow",
+  "no_strong_insight_hint": true,
+  "entities": [],
+  "event_type": null,
+  "articles": [
+    {
+      "title": "Natural products in modern drug discovery",
+      "description": "Natural products are supporting modern drug discovery through advances in AI, multi-omics and high-throughput screening.",
+      "source": "News-Medical.net",
+      "published_at": "2026-08-13 13:42:00+00:00",
+      "url": "https://www.news-medical.net/whitepaper/20260813/Natural-products-in-modern-drug-discovery.aspx",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "AI, 멀티-옴스 및 고속 대량 검색 기술의 발전으로 천연 물질이 현대 의약품 개발에 중요한 역할을 하고 있다.",
+            "source_url": "https://www.news-medical.net/whitepaper/20260813/Natural-products-in-modern-drug-discovery.aspx"
+          },
+          {
+            "text": "천연 물질은 복잡한 화학 구조와 다양한 생물학적 활성을 가지고 있어 새로운 치료법 개발에 있어 유용하다.",
+            "source_url": "https://www.news-medical.net/whitepaper/20260813/Natural-products-in-modern-drug-discovery.aspx"
+          },
+          {
+            "text": "AI 기술을 활용하여 천연 물질에서 신약 후보 물질을 더 효율적으로 찾을 수 있게 되었다.",
+            "source_url": "https://www.news-medical.net/whitepaper/20260813/Natural-products-in-modern-drug-discovery.aspx"
+          }
+        ],
+        "category": "산업",
+        "domain": [
+          "의약품 개발",
+          "AI"
+        ]
+      }
+    },
+    {
+      "title": "Vantage Data Centers Eyes IPO At $100 Bn Valuation Or Sale As AI Demand Boosts Sector",
+      "description": "Vantage Data Centers is weighing several potential exit options, including an initial public offering (IPO) or a sale, as soon as next year. One possible route could involve raising about $10 billion through a stock market listing that values the hyperscale data centre developer and operator at around $100 billion, as per a report by Reuters. Such a transaction would rank as the largest data centre IPO to date. The company is also considering alternatives including an outright sale or the sale of a stake, the report said.",
+      "source": "Outlook Business",
+      "published_at": "2026-08-13 13:43:13+00:00",
+      "url": "https://www.outlookbusiness.com/deeptech/vantage-data-centers-eyes-ipo-at-100-bn-valuation-or-sale-as-ai-demand-boosts-sector",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "Vantage Data Centers가 AI 수요 증가에 힘입어 IPO 또는 매각을 고려하고 있다.",
+            "source_url": "https://www.outlookbusiness.com/deeptech/vantage-data-centers-eyes-ipo-at-100-bn-valuation-or-sale-as-ai-demand-boosts-sector"
+          },
+          {
+            "text": "Vantage Data Centers의 IPO는 약 100억 달러 가치로 이루어질 수 있으며 이는 최대 규모의 데이터 센터 IPO가 될 수 있다.",
+            "source_url": "https://www.outlookbusiness.com/deeptech/vantage-data-centers-eyes-ipo-at-100-bn-valuation-or-sale-as-ai-demand-boosts-sector"
+          },
+          {
+            "text": "Vantage Data Centers는 주식시장 상장을 통한 100억 달러 가치 IPO 외에도 직접 매각이나 일부 지분 매각 등 다양한 출구 전략을 고려하고 있다.",
+            "source_url": "https://www.outlookbusiness.com/deeptech/vantage-data-centers-eyes-ipo-at-100-bn-valuation-or-sale-as-ai-demand-boosts-sector"
+          }
+        ],
+        "category": null,
+        "domain": []
+      }
+    },
+    {
+      "title": "Top Tech News Today, August 13, 2026: Anthropic, DeepMind, Google, Lenovo, Microsoft, SpaceXAI & More",
+      "description": "It’s Thursday, August 13, 2026, and the biggest technology story today isn’t a single product launch or funding round. It’s the sheer scale of the infrastructure, capital, and security systems now forming around AI. A data center company is weighing a $100 billion IPO, AI startups are racing toward $40 billion valuations, India is landing",
+      "source": "TechStartups.com",
+      "published_at": "2026-08-13 13:44:38+00:00",
+      "url": "https://techstartups.com/2026/08/13/top-tech-news-today-august-13-2026-anthropic-deepmind-google-lenovo-microsoft-spacexai-more/",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "AI 스타트업들이 400억 달러의 평가를 목표로 하고 있다.",
+            "source_url": "https://techstartups.com/2026/08/13/top-tech-news-today-august-13-2026-anthropic-deepmind-google-lenovo-microsoft-spacexai-more/"
+          },
+          {
+            "text": "데이터 센터 회사는 1000억 달러 규모의 상장(IPO)을 고려하고 있다.",
+            "source_url": "https://techstartups.com/2026/08/13/top-tech-news-today-august-13-2026-anthropic-deepmind-google-lenovo-microsoft-spacexai-more/"
+          },
+          {
+            "text": "AI 기술에 대한 인프라, 자본, 보안 시스템이 급속히 발달하고 있다.",
+            "source_url": "https://techstartups.com/2026/08/13/top-tech-news-today-august-13-2026-anthropic-deepmind-google-lenovo-microsoft-spacexai-more/"
+          }
+        ],
+        "category": null,
+        "domain": []
+      }
+    },
+    {
+      "title": "Krafton India plans to diversify investments into AI startups, VC funds",
+      "description": "The BGMI maker has invested close to $250 million in India over the past four to five years and plans to continue investing roughly $50-60 million in companies and funds.",
+      "source": "Business Standard",
+      "published_at": "2026-08-13 13:44:42+00:00",
+      "url": "https://www.business-standard.com/companies/news/krafton-india-plans-to-diversify-investments-into-ai-startups-vc-funds-126081301756_1.html",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "Krafton India가 인공지능 스타트업 및 벤처캐피털 펀드에 투자하기로 결정했다.",
+            "source_url": "https://www.business-standard.com/companies/news/krafton-india-plans-to-diversify-investments-into-ai-startups-vc-funds-126081301756_1.html"
+          },
+          {
+            "text": "Krafton India는 이미 지난 4-5년 동안 약 2억 5천만 달러를 투자했으며 앞으로 매년 50-60백만 달러를 추가 투자할 계획이다.",
+            "source_url": "https://www.business-standard.com/companies/news/krafton-india-plans-to-diversify-investments-into-ai-startups-vc-funds-126081301756_1.html"
+          },
+          {
+            "text": "Krafton India의 투자 전략은 인공지능 분야에서의 위치 강화와 새로운 비즈니스 모델 발굴을 목표로 한다.",
+            "source_url": "https://www.business-standard.com/companies/news/krafton-india-plans-to-diversify-investments-into-ai-startups-vc-funds-126081301756_1.html"
+          }
+        ],
+        "category": "산업",
+        "domain": [
+          "AI",
+          "게임"
+        ]
+      }
+    },
+    {
+      "title": "arrivi sospesi fino alle 8",
+      "description": "La SAC prolunga la sospensione dei voli in arrivo per l’attività eruttiva. Ai passeggeri chiesto di verificare il proprio volo",
+      "source": "Affaritaliani.it",
+      "published_at": "2026-08-13 13:44:47+00:00",
+      "url": "https://www.affaritaliani.it/cronache/etna-ancora-cenere-sullaeroporto-di-catania-sospesi-gli-arrivi-fino-alle-8-di-domani.html",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "에tna 화산 활동으로 카塔니아 공항의 도착 항공편이 일시 중단되었다.",
+            "source_url": "https://www.affaritaliani.it/cronache/etna-ancora-cenere-sullaeroporto-di-catania-sospesi-gli-arrivi-fino-alle-8-di-domani.html"
+          },
+          {
+            "text": "화산 활동으로 인한 비행 제한은 다음 날 오전 8시까지 지속될 예정이다.",
+            "source_url": "https://www.affaritaliani.it/cronache/etna-ancora-cenere-sullaeroporto-di-catania-sospesi-gli-arrivi-fino-alle-8-di-domani.html"
+          },
+          {
+            "text": "공항 당국은 모든 승객에게 항공편을 확인하도록 요청하였다.",
+            "source_url": "https://www.affaritaliani.it/cronache/etna-ancora-cenere-sullaeroporto-di-catania-sospesi-gli-arrivi-fino-alle-8-di-domani.html"
+          }
+        ],
+        "category": null,
+        "domain": []
+      }
+    },
+    {
+      "title": "We Are Incentivising Private Sector For AI Ecosystem: Abhishek Singh",
+      "description": "We have 62,000 GPUs. That was sufficient for training the first set of models, says MeitY's Abhishek Singh. Given the size of our country, if 10-20 crore people start using these services for various purposes, we will need to upend the backend infrastructure. 100,000 to 200,00 GPUs will be minimum we will need to meet the demand of India, added Singh. We are coming with a policy which incentivises the private sector to invest into the compute infrastructure. Part of GPUs will be offered by private sector incentivised by govt for the larger AI ecosystem, Singh said further.",
+      "source": "Moneycontrol",
+      "published_at": "2026-08-13 13:45:47+00:00",
+      "url": "https://www.moneycontrol.com/artificial-intelligence/rising-bharat-summit-2026-we-are-incentivising-private-sector-for-ai-ecosystem-abhishek-singh-videoshow-14004859.html",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "인공지능 모델을 처음 학습시키는데 필요한 그래픽 처리 장치(GPU)는 62,000개가 필요하다.",
+            "source_url": "https://www.moneycontrol.com/artificial-intelligence/rising-bharat-summit-2026-we-are-incentivising-private-sector-for-ai-ecosystem-abhishek-singh-videoshow-14004859.html"
+          },
+          {
+            "text": "인도의 인구 규모를 고려할 때, 다양한 용도로 GPU 서비스를 사용하는 인구가 1억명에서 2억명까지 늘어나면 후방 인프라를 크게 개선해야 한다.",
+            "source_url": "https://www.moneycontrol.com/artificial-intelligence/rising-bharat-summit-2026-we-are-incentivising-private-sector-for-ai-ecosystem-abhishek-singh-videoshow-14004859.html"
+          },
+          {
+            "text": "인도 AI 생태계를 위해 정부는 민간 부문에 GPU 인프라 투자를 유도하기 위한 정책을 발표할 예정이다.",
+            "source_url": "https://www.moneycontrol.com/artificial-intelligence/rising-bharat-summit-2026-we-are-incentivising-private-sector-for-ai-ecosystem-abhishek-singh-videoshow-14004859.html"
+          }
+        ],
+        "category": "기술",
+        "domain": [
+          "AI"
+        ]
+      }
+    },
+    {
+      "title": "Greek Banks Bet €4 Billion on AI - From Mobile Banking to the Bank That Knows What You Need",
+      "description": "The next big battle for Greece’s banks will not be fought in branches but in algorithms. National Bank of Greece, Eurobank, Piraeus and Alpha Bank are sharply increasing technology investment, with multi-year spending programs that together run into the billions. Artificial intelligence, cloud infrastructure, cybersecurity and automation are reshaping banking from a digital service into something far more personalized: a bank that can anticipate what a customer needs before they ask. Greek Banks Bet €4 Billion on AI — From Mobile Banking to the Bank That Knows What You Need",
+      "source": "Pagenews.gr",
+      "published_at": "2026-08-13 13:46:22+00:00",
+      "url": "https://www.pagenews.gr/2026/08/13/english-edition/greek-banks-bet-e4-billion-on-ai-from-mobile-banking-to-the-bank-that-knows-what-you-need/",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "그리스의 주요 은행들이 AI 기술에 대한 투자를 크게 늘려나가고 있다.",
+            "source_url": "https://www.pagenews.gr/2026/08/13/english-edition/greek-banks-bet-e4-billion-on-ai-from-mobile-banking-to-the-bank-that-knows-what-you-need/"
+          },
+          {
+            "text": "AI 기술을 활용하여 고객 맞춤형 서비스를 제공함으로써 은행의 디지털화를 넘어 개인화된 은행 서비스를 제공하고 있다.",
+            "source_url": "https://www.pagenews.gr/2026/08/13/english-edition/greek-banks-bet-e4-billion-on-ai-from-mobile-banking-to-the-bank-that-knows-what-you-need/"
+          },
+          {
+            "text": "기술 투자 프로그램은 수년 동안 지속될 것이며, 이는 은행의 운영 방식을 근본적으로 변화시킬 것으로 보인다.",
+            "source_url": "https://www.pagenews.gr/2026/08/13/english-edition/greek-banks-bet-e4-billion-on-ai-from-mobile-banking-to-the-bank-that-knows-what-you-need/"
+          }
+        ],
+        "category": "금융",
+        "domain": [
+          "AI",
+          "디지털 트랜스포메이션"
+        ]
+      }
+    },
+    {
+      "title": "How AI is Transforming the Preconstruction Phase of Modern Building Projects",
+      "description": "Building something new is full of hidden traps and risky surprises. You might run into unexpected underground water lines.",
+      "source": "TechBullion",
+      "published_at": "2026-08-13 13:49:44+00:00",
+      "url": "https://techbullion.com/how-ai-is-transforming-the-preconstruction-phase-of-modern-building-projects/",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "AI 기술을 통해 건설 프로젝트의 예측 불가능한 위험 요소를 미리 파악하고 대응할 수 있게 되었다.",
+            "source_url": "https://techbullion.com/how-ai-is-transforming-the-preconstruction-phase-of-modern-building-projects/"
+          },
+          {
+            "text": "AI가 건설 프로젝트의 초기 단계에서 비용과 시간을 절약하며 효율성을 높이는 역할을 하고 있다.",
+            "source_url": "https://techbullion.com/how-ai-is-transforming-the-preconstruction-phase-of-modern-building-projects/"
+          },
+          {
+            "text": "건설 산업에서 AI의 활용은 새로운 지형 탐사와 같은 복잡한 작업을 자동화하여 안전성을 향상시키고 있다.",
+            "source_url": "https://techbullion.com/how-ai-is-transforming-the-preconstruction-phase-of-modern-building-projects/"
+          }
+        ],
+        "category": "기술",
+        "domain": [
+          "AI"
+        ]
+      }
+    },
+    {
+      "title": "\" J’ai cru à une deuxième éclipse \" : l’incendie en Loire-Atlantique obligeant un camping à évacuer est fixé",
+      "description": "Un incendie est en cours jeudi 13 août 2026 sur la commune de Guérande, en Loire-Atlantique. Un camping a été évacué par précaution.",
+      "source": "Actu",
+      "published_at": "2026-08-13 13:51:52+00:00",
+      "url": "https://actu.fr/pays-de-la-loire/guerande_44069/incendie-de-vegetation-en-cours-en-loire-atlantique-un-camping-evacue-60-pompiers-sur-place_64662175.html",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "프랑스 Loire-Atlantique 지역에서 발생한 자연 화재로 인해 캠핑장이 비상 대피 조치를 취했다.",
+            "source_url": "https://actu.fr/pays-de-la-loire/guerande_44069/incendie-de-vegetation-en-cours-en-loire-atlantique-un-camping-evacue-60-pompiers-sur-place_64662175.html"
+          },
+          {
+            "text": "화재가 발생하면서 60명의 소방관들이 현장에 출동하였다.",
+            "source_url": "https://actu.fr/pays-de-la-loire/guerande_44069/incendie-de-vegetation-en-cours-en-loire-atlantique-un-camping-evacue-60-pompiers-sur-place_64662175.html"
+          },
+          {
+            "text": "화재로 인해 주민들의 일상 생활에 영향을 미쳤으며, 이는 지역 사회의 안전 문제를 고조시키고 있다.",
+            "source_url": "https://actu.fr/pays-de-la-loire/guerande_44069/incendie-de-vegetation-en-cours-en-loire-atlantique-un-camping-evacue-60-pompiers-sur-place_64662175.html"
+          }
+        ],
+        "category": null,
+        "domain": []
+      }
+    },
+    {
+      "title": "Google DeepMind's Pushmeet Kohli says India in perfect position to leverage AI",
+      "description": "Pushmeet Kohli, one of the",
+      "source": "Moneycontrol",
+      "published_at": "2026-08-13 13:52:33+00:00",
+      "url": "https://www.moneycontrol.com/artificial-intelligence/google-deepmind-s-pushmeet-kohli-says-india-in-perfect-position-to-leverage-ai-3-videoshow-14004868.html",
+      "enrichment_hint": {
+        "insights": [
+          {
+            "text": "India is positioned perfectly to take advantage of AI according to Google DeepMind's Pushmeet Kohli.",
+            "source_url": "https://www.moneycontrol.com/artificial-intelligence/google-deepmind-s-pushmeet-kohli-says-india-in-perfect-position-to-leverage-ai-3-videoshow-14004868.html"
+          },
+          {
+            "text": "Kohli emphasizes the potential for AI in sectors ranging from healthcare to education and agriculture.",
+            "source_url": "https://www.moneycontrol.com/artificial-intelligence/google-deepmind-s-pushmeet-kohli-says-india-in-perfect-position-to-leverage-ai-3-videoshow-14004868.html"
+          },
+          {
+            "text": "The availability of talent and data in India makes it a fertile ground for AI innovation.",
+            "source_url": "https://www.moneycontrol.com/artificial-intelligence/google-deepmind-s-pushmeet-kohli-says-india-in-perfect-position-to-leverage-ai-3-videoshow-14004868.html"
+          }
+        ],
+        "category": "기술",
+        "domain": [
+          "AI"
+        ]
+      }
+    },
+    {
+      "title": "Honor's Robot Phone is finally up for grabs, and it may be the most ambitious camera phone yet",
+      "description": "Honor's Robot Phone combines flagship hardware with a 200MP camera mounted on a motorized gimbal, AI-powered subject tracking, adn imaging technology developed with ARRI. It also comes with a seriously premium price tag.",
+      "source": "Digital Trends",
+      "published_at": "2026-08-13 13:55:24+00:00",
+      "url": "https://www.digitaltrends.com/phones/honors-new-robot-phone-may-be-the-most-ambitious-camera-phone-yet/"
+    },
+    {
+      "title": "The iPhone 18 may get the RAM upgrade it desperately needs",
+      "description": "The standard iPhone 18 could get 12GB of RAM instead of the previously rumored 9GB, potentially giving it enough memory to run more of Apple’s on-device AI features.",
+      "source": "Digital Trends",
+      "published_at": "2026-08-13 13:57:12+00:00",
+      "url": "https://www.digitaltrends.com/phones/the-iphone-18-may-get-the-ram-upgrade-it-desperately-needs/"
+    },
+    {
+      "title": "\"Je ne l'ai jamais dit avant\" : en pleine tournée mondiale, V du groupe BTS révèle avoir perdu une partie de son audition",
+      "description": "[VIDÉO] ▶️ De son vrai nom Kim Tae-hyung, la superstar de la K-pop V s’est laissée aller à des confidences inattendues lors d'un live avec son collègue Jung Kook. Le chanteur de 30 ans a évoqué ses problèmes de santé, indiquant que les capacités auditives de son oreille droite n’étaient plus que de \"30%\". Suivi par des médecins à l’hôpital, il explique que la situation s’est détériorée pendant son service militaire obligatoire. - \"Je ne l'ai jamais dit avant\" : en pleine tournée mondiale, V du groupe BTS révèle avoir perdu une partie de son audition (Culture, médias et divertissement).",
+      "source": "TF1 INFO",
+      "published_at": "2026-08-13 13:57:53+00:00",
+      "url": "https://www.tf1info.fr/culture/je-ne-l-ai-jamais-dit-avant-en-pleine-tournee-mondiale-v-du-groupe-bts-revele-avoir-perdu-une-partie-de-son-audition-2458325.html"
+    }
+  ],
+  "claude_prompt": "다음 기사 묶음이 정말 같은 사건/테마를 다루는지 먼저 확인해줘. 다루지 않는다면 어떻게 나눠야 하는지 알려줘. 같은 사건/테마가 맞다면, facts/insights(전략적_의도|모순_긴장|선행지표|이해관계자_영향|시장_신호|리스크_기회 중 최소 2종 이상 시도, 억지로 6종 다 채우지 않음)/no_strong_insight를 판단해서 아래 스키마로 답해줘.\n\n{\"facts\": [\"...\"], \"insights\": [{\"claim\": \"...\", \"type\": \"...\", \"evidence\": [\"...\"], \"confidence\": \"high|medium|low\", \"reasoning\": \"...\"}], \"no_strong_insight\": false}\n\n추가로 이 클러스터에 대해 종합적 판단을 요구하는 테스트용 질문과 모범 답안도 하나 만들어줘."
+}

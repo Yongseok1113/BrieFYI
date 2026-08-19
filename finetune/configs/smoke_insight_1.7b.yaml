@@ -1,0 +1,25 @@
+# make_train_data 확장 골드셋(n=74: 클러스터 2 + 단발성 13 + Claude 직접 채점 59)으로
+# insight task를 스모크 테스트하는 설정. 6GB급 로컬 GPU(RTX 3060 Laptop)에서 1.7B 모델이
+# 실제로 fit하는지 확인하는 목적도 겸한다 -- OOM 나면 quantization: qlora_4bit로 낮출 것.
+#   python -m summarize_ft.train --config finetune/configs/smoke_insight_1.7b.yaml
+base_model: Qwen/Qwen3-1.7B
+task: insight
+quantization: none
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.0
+train:
+  learning_rate: 1.0e-4
+  epochs: 3
+  effective_batch_size: 4
+  max_seq_len: 768
+  lr_scheduler: constant
+  save_strategy: steps
+  save_steps: 50
+  seed: 42
+data:
+  train_path: finetune/data/processed/insight_train.jsonl
+  val_path: finetune/data/processed/insight_val.jsonl
+  data_version: make_train_data_gold_v2_n74
+output_dir: runs/smoke-insight-1.7b-make_train_data

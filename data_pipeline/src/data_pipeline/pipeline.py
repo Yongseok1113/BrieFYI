@@ -11,26 +11,29 @@ import time
 
 from . import extract, ingest, normalize, enrich as enrich_stage
 from .config import config
+from .sources.base import DataSource
 from .sources.gnews_source import GNewsSource
 
 
-def run_ingest_multi(keywords: list[str], **fetch_kwargs) -> dict:
-    """여러 키워드로 나눠 GNews ingest를 돌리고 결과를 합산한다. 키워드별로 별도
-    요청을 보내므로(GNews는 다중 키워드 OR 검색을 지원하지 않음), 카테고리를 넓게
-    커버하고 싶을 때(예: 경제/산업/금융/기술) 이걸 쓴다.
+def run_ingest_multi(keywords: list[str], *, source: DataSource | None = None, **fetch_kwargs) -> dict:
+    """여러 키워드로 나눠 ingest를 돌리고 결과를 합산한다. 키워드별로 별도
+    요청을 보내므로(GNews/네이버 모두 다중 키워드 OR 검색을 지원하지 않음), 카테고리를
+    넓게 커버하고 싶을 때(예: 경제/산업/금융/기술) 이걸 쓴다. source를 안 주면 기존과
+    동일하게 GNews를 쓴다 — 네이버로 돌리려면 `source=NaverNewsSource()`.
 
-    GNews 무료 플랜은 초당 1건 제한이 있다 — 키워드를 곧바로 이어서 요청하면
+    무료/개발자 플랜은 초당 요청 수 제한이 있다 — 키워드를 곧바로 이어서 요청하면
     429가 난다(실제로 겪음). 키워드 사이에 살짝 텀을 둔다."""
+    source = source or GNewsSource()
     per_keyword = []
     totals = {"fetched": 0, "inserted": 0, "skipped": 0, "failed": 0}
     for i, kw in enumerate(keywords):
         if i > 0:
             time.sleep(1.2)
-        result = ingest.run_ingest(GNewsSource(), keyword=kw, **fetch_kwargs)
+        result = ingest.run_ingest(source, keyword=kw, **fetch_kwargs)
         per_keyword.append(result)
         for key in totals:
             totals[key] += result[key]
-    return {"source": "gnews", "keywords": keywords, **totals, "per_keyword": per_keyword}
+    return {"source": source.name, "keywords": keywords, **totals, "per_keyword": per_keyword}
 
 
 def run_all(*, limit: int | None = None, do_ingest: bool = True, keywords: list[str] | None = None) -> dict:

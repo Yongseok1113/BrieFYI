@@ -13,11 +13,20 @@ import json
 def _cmd_run(args: argparse.Namespace) -> None:
     from . import extract, ingest, normalize, enrich as enrich_stage, pipeline
     from .sources.gnews_source import GNewsSource
+    from .sources.naver_source import NaverNewsSource
+
+    source = NaverNewsSource() if args.source == "naver" else GNewsSource()
+    fetch_kwargs = {"max_results": args.max_results} if args.max_results else {}
 
     if args.stage == "all":
+        # run_all은 아직 source 선택을 안 받는다 -- ingest만 네이버로 돌리려면 --stage ingest 사용.
         result = pipeline.run_all(limit=args.limit, do_ingest=not args.no_ingest, keywords=args.keywords)
     elif args.stage == "ingest":
-        result = pipeline.run_ingest_multi(args.keywords) if args.keywords else ingest.run_ingest(GNewsSource())
+        result = (
+            pipeline.run_ingest_multi(args.keywords, source=source, **fetch_kwargs)
+            if args.keywords
+            else ingest.run_ingest(source, **fetch_kwargs)
+        )
     elif args.stage == "extract":
         result = extract.run_extract(args.limit)
     elif args.stage == "enrich":
@@ -51,6 +60,14 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--keywords", nargs="+", default=None,
         help="ingest/all 단계에서 여러 키워드로 나눠 수집 (예: --keywords 경제 산업 금융 기술)",
+    )
+    run_parser.add_argument(
+        "--source", default="gnews", choices=["gnews", "naver"],
+        help="ingest 단계에서 쓸 소스 (기본 gnews)",
+    )
+    run_parser.add_argument(
+        "--max-results", type=int, default=None,
+        help="ingest 단계에서 키워드당 수집할 기사 수 (미지정 시 NEWS_MAX_RESULTS)",
     )
     run_parser.set_defaults(func=_cmd_run)
 

@@ -36,6 +36,12 @@ class Config:
     NEWS_LOOKBACK_DAYS = int(os.getenv("NEWS_LOOKBACK_DAYS", "1"))
     NEWS_MAX_RESULTS = int(os.getenv("NEWS_MAX_RESULTS", "10"))
 
+    # 네이버 뉴스 검색 (구조화 소스, sources/naver_source.py). 발급: apihub.naver.com/devcenter/apps
+    # (NAVER API HUB -- 레거시 developers.naver.com 키와는 발급처·인증 헤더가 다르다)
+    NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID", "")
+    NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET", "")
+    NAVER_NEWS_BASE_URL = "https://naverapihub.apigw.ntruss.com/search/v1/news"
+
     # LLM (변형2 enrich, 변형3 normalize fallback). 파인튜닝 안 한 기본 모델을
     # 프롬프트 엔지니어링만으로 호출하는 게 기본 전제다 — Claude 비용/약관을 피하기 위함.
     #

@@ -1,0 +1,26 @@
+{
+  "cluster_id": "c_57",
+  "source_clusters": [
+    "c_narrow_57",
+    "c_broad_57"
+  ],
+  "same_event": true,
+  "note": "같은 사건을 2개 매체(La Nouvelle Republique Des Pyrénées, La Dépêche)가 동일한 제목·설명으로 보도 -- 신디케이션 중복.",
+  "articles": [
+    {
+      "title": "\"Je t'ai respecté et tu m'as pris pour un con\", un détenu de 21 ans condamné à dix mois de prison pour insultes et dégradations en cellule",
+      "url": "https://www.nrpyrenees.fr/2026/08/16/je-tai-respecte-et-tu-mas-pris-pour-un-con-un-detenu-de-21-ans-condamne-a-dix-mois-de-prison-pour-insultes-et-degradations-en-cellule-13507927.php"
+    }
+  ],
+  "facts": [
+    "타르브 법원은 21세 수감자에게 재사회화 상담사에 대한 모욕과 감방 기물파손 혐의로 금고 10개월형을 선고했다.",
+    "이 수감자는 이전에도 수감 이력이 있다."
+  ],
+  "insights": [],
+  "no_strong_insight": true,
+  "reasoning": "개별 형사사건 판결 기사로, 특정 산업·시장·기업 전략과 연결되는 구조적 함의가 없다. '군집으로 묶였다(=같은 사건, 복수 매체 보도)'와 '전략적 인사이트가 있다'는 서로 다른 축이라는 걸 보여주는 사례 -- 클러스터링 알고리즘은 중복 보도를 잘 잡아냈지만, 그것만으로 인사이트 유무를 판단할 순 없다.",
+  "test_qa": {
+    "question": "이 기사에서 전략적 시사점이나 시장 신호와 같은 비즈니스 인사이트를 도출할 수 있는가?",
+    "answer": "아니오. 이 기사는 개별 형사사건(수감자의 모욕·기물파손에 대한 판결)을 다루고 있으며, 특정 산업·시장·기업 전략과 연결되는 구조적 함의가 없다. 이런 기사에 억지로 '전략적 의도'나 '시장 신호' 같은 인사이트를 부여하면 근거 없는 과잉 해석(환각)이 된다 -- no_strong_insight: true로 판단하는 것이 맞다."
+  }
+}

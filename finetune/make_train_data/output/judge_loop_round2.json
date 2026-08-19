@@ -1,0 +1,673 @@
+{
+  "prompt": "당신은 여러 뉴스 요약을 바탕으로 비즈니스 인사이트를 도출하는 애널리스트입니다.\n\n**절대 규칙**: facts와 insights의 evidence는 반드시 입력으로 주어진 제목·요약에 실제로 있는 내용만 사용하세요. 구체적인 숫자·기간(예: '3주간')·인과관계·소송 결과 예측처럼 요약에 없는 내용을 지어내지 마세요. 불확실하면 facts를 짧고 보수적으로만 적으세요.\n\n**insight와 fact 재진술을 구분하세요**: insight는 fact를 다른 말로 반복하는 문장이 아니라, 그 fact로부터 도출한 새로운 함의(누가 영향받는지, 어떤 위험/기회가 있는지, 업계 전체에 어떤 신호인지)여야 합니다.\n\n**단발성 사실과 인사이트 여지를 구분하는 기준**: 기업의 투자/M&A/제품 출시, 정부 정책, 소송, 시장 반응(주가·반발·논쟁) 등 구조적 함의로 이어질 수 있는 사건이 언급되면 대개 인사이트 여지가 있습니다. 반대로 개별 형사사건, 연예인 개인사, 운세·날씨 등은 no_strong_insight입니다. 판단이 애매할 때 무조건 no_strong_insight로 포기하지 말고, 근거가 약하면 confidence를 low로 낮춰서라도 인사이트를 시도하세요.\n\n근거가 충분하면 인사이트를 2~5개 도출하고, 각 인사이트에는 근거가 된 기사의 source_url을 반드시 포함하세요. 출력은 반드시 JSON이어야 합니다.",
+  "summary": {
+    "round": "R2",
+    "n_total": 15,
+    "n_generation_fail": 2,
+    "n_judge_fail": 0,
+    "n_judged": 13,
+    "classification_match_rate": 0.9230769230769231,
+    "grounded_rate": 0.46153846153846156,
+    "avg_insight_quality": 35.0,
+    "n_quality_samples": 6
+  },
+  "results": [
+    {
+      "idx": 0,
+      "title": "Global AI investment $1 tln in 2026, to reach 1.4 pc global GDP by 2028: Goldman Sachs",
+      "gold": {
+        "facts": [
+          "Goldman Sachs는 2026년 전 세계 AI 투자 규모가 약 1조 달러에 이를 것으로 전망했다.",
+          "AI 관련 자본지출(capex)은 향후에도 견조한 수준을 유지할 것으로 예상된다.",
+          "Goldman Sachs는 2028년까지 AI 투자가 전 세계 GDP의 약 1.4%를 차지할 것으로 전망했다."
+        ],
+        "insights": [
+          {
+            "claim": "AI 투자가 특정 기업의 일시적 지출이 아니라 GDP 비중으로 언급될 만큼 거시경제 지표로 다뤄지는 구조적 성장 국면에 들어섰다는 신호다.",
+            "type": "시장_신호",
+            "evidence": [
+              "1조 달러 규모 전망(2026년)",
+              "GDP 대비 1.4% 전망(2028년)"
+            ],
+            "confidence": "medium",
+            "reasoning": "단일 투자은행의 전망치라 확정적 사실은 아니지만, GDP 비중까지 구체적으로 제시한 것은 AI 투자를 매크로 트렌드로 취급하기 시작했다는 신호로 볼 수 있다.",
+            "source_url": "https://www.aninews.in/news/business/global-ai-investment-1-tln-in-2026-to-reach-14-pc-global-gdp-by-2028-goldman-sachs20260816052058/"
+          },
+          {
+            "claim": "AI capex 성장세가 지속된다는 전망은 반도체·데이터센터·에너지 등 AI 인프라 관련 산업 수요의 선행지표로 해석될 수 있다.",
+            "type": "선행지표",
+            "evidence": [
+              "AI 관련 자본지출이 향후에도 견조한 수준 유지 전망"
+            ],
+            "confidence": "low",
+            "reasoning": "기사 자체에 산업별 세부 breakdown이 없어 추론 성격이 크다 -- 확신도를 낮게 잡았다.",
+            "source_url": "https://www.aninews.in/news/business/global-ai-investment-1-tln-in-2026-to-reach-14-pc-global-gdp-by-2028-goldman-sachs20260816052058/"
+          },
+          {
+            "claim": "AI 투자 규모가 GDP 비중으로 논의되기 시작하면, 투자은행·리서치 기관 입장에서는 AI 관련 전망·자문 서비스에 대한 수요가 함께 늘어나는 수혜가 있을 수 있다.",
+            "type": "이해관계자_영향",
+            "evidence": [
+              "Goldman Sachs가 직접 전망치를 발표"
+            ],
+            "confidence": "low",
+            "reasoning": "기사는 전망 발표 사실만 다룰 뿐 Goldman Sachs의 수혜 여부를 직접 언급하지 않아 추론 성격이 크다.",
+            "source_url": "https://www.aninews.in/news/business/global-ai-investment-1-tln-in-2026-to-reach-14-pc-global-gdp-by-2028-goldman-sachs20260816052058/"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [
+          "Goldman Sachs이 2026년까지 글로벌 AI 투자가 1조 달러에 달할 것이라고 밝혔으며, 2028년까지 14%의 글로벌 GDP에 달할 것이라고 전망했다."
+        ],
+        "insights": [
+          {
+            "claim": "Goldman Sachs가 AI 투자 규모를 GDP 비율로 전망한 것은, 향후 AI 기술이 업계 전체에 얼마나 큰 영향을 미칠지 평가하는 데 있어 신호가 됨을 보여준다.",
+            "type": "전망_기회",
+            "evidence": [
+              "2026년 1조 달러, 2028년 14% GDP 전망"
+            ],
+            "confidence": "medium",
+            "reasoning": "전망 기간(2026~2028)이 2년으로 짧아, 향후 실적에 대한 직접적 데이터는 제한적이다.",
+            "source_url": "https://www.aninews.in/news/business/global-ai-investment-1-tln-in-2026-to-reach-14-pc-global-gdp-by-2028-goldman-sachs20260816052058/"
+          },
+          {
+            "claim": "이 전망이 현실화되면 AI 투자가 GDP 비중으로 확대되는 것은, AI 기술이 업계 전체에 얼마나 큰 영향을 미칠지 평가하는 데 있어 신호가 됨을 보여준다.",
+            "type": "전망_기회",
+            "evidence": [
+              "2026년 1조 달러, 2028년 14% GDP 전망"
+            ],
+            "confidence": "medium",
+            "reasoning": "전망 기간(2026~2028)이 2년으로 짧아, 향후 실적에 대한 직접적 데이터는 제한적이다.",
+            "source_url": "https://www.aninews.in/news/business/global-ai-investment-1-tln-in-2026-to-reach-14-pc-global-gdp-by-2028-goldman-sachs20260816052058/"
+          }
+        ],
+        "no_strong_insight": false,
+        "confidence": "medium"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": false,
+        "ungrounded_claims": [
+          "2028년까지 14%의 글로벌 GDP에 달할 것이라고 전망했다 (기사에서는 1.4%로 명시됨)",
+          "AI 투자가 업계 전체에 얼마나 큰 영향을 미칠지 평가하는 데 있어 신호가 됨 (기사에 없는 해석적 추론)"
+        ],
+        "insight_quality": 35,
+        "reasoning": "모델은 정답과 같이 no_strong_insight=false로 올바르게 분류했으나, GDP 비중을 14%로 잘못 표기했고(정답은 1.4%), 제시된 두 인사이트가 모두 본질적으로 동일한 내용을 반복하며 기사의 사실에서 크게 벗어난 해석을 제공합니다. 정답의 인사이트들은 '거시경제 지표화', '인프라 산업 수요 선행지표', '이해관계자 영향' 등 다층적 통찰을 제시하는 반면, 모델은 단순하고 반복적인 해석만 제시합니다."
+      }
+    },
+    {
+      "idx": 1,
+      "title": "Meta AI glasses spark backlash across borders",
+      "gold": {
+        "facts": [
+          "Meta의 AI 글래스가 인플루언서 중심 출시 전략과 할인에도 불구하고 인도 등 여러 국가에서 반발을 사고 있다."
+        ],
+        "insights": [
+          {
+            "claim": "국경을 넘나드는 반발은 Meta의 웨어러블 AI 전략이 문화·프라이버시 감수성을 충분히 반영하지 못했을 위험을 보여준다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "인도 및 해외 여러 국가에서 반발"
+            ],
+            "confidence": "medium",
+            "reasoning": "반발의 구체적 이유(프라이버시/문화/가격 등)가 기사에 명시되지 않아 원인 추정에는 한계가 있다.",
+            "source_url": "https://www.thehindu.com/sci-tech/technology/meta-ai-glasses-spark-backlash-across-borders/article71339666.ece"
+          },
+          {
+            "claim": "인플루언서 마케팅만으로는 신뢰 문제가 걸린 하드웨어(카메라 내장 글래스)의 대중적 수용을 얻기 어렵다는 시사점이 있다.",
+            "type": "이해관계자_영향",
+            "evidence": [
+              "인플루언서 스튜디드 출시 전략에도 반발 지속"
+            ],
+            "confidence": "low",
+            "reasoning": "판매 실적 데이터가 없어 마케팅 효과 자체를 판단하긴 이르다.",
+            "source_url": "https://www.thehindu.com/sci-tech/technology/meta-ai-glasses-spark-backlash-across-borders/article71339666.ece"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [
+          "메타(Meta)가 인플루언서 스타일로 AI 광고를 펼치며 인기 했으나, 인도 및 해외에서 반발이 커지고 있다."
+        ],
+        "insights": [
+          {
+            "claim": "인플루언서 스타일의 AI 광고가 특정 지역(인도)에서 반발을 이끌어내는 것은, AI 광고가 특정 지역의 소비자 신뢰에 대한 민감성을 반영하고 있다는 신호다.",
+            "type": "시장_신호",
+            "evidence": [
+              "인도 및 해외 반발"
+            ],
+            "confidence": "medium",
+            "reasoning": "인도 지역의 반발이 특정 인플루언서 스타일의 AI 광고에 집중된다는 점이 구체적이다.",
+            "source_url": "https://www.thehindu.com/sci-tech/technology/meta-ai-glasses-spark-backlash-across-borders/article71339666.ece"
+          },
+          {
+            "claim": "인도 지역의 반발이 커지면 메타의 AI 광고 전략이 다른 지역(특히 인도)에서 성공하지 못할 수 있다는 위험 요소가 된다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "인도 및 해외 반발"
+            ],
+            "confidence": "medium",
+            "reasoning": "인도 지역의 반발이 커지면 메타의 전략적 위기로 이어질 수 있다.",
+            "source_url": "https://www.thehindu.com/sci-tech/technology/meta-ai-glasses-spark-backlash-across-borders/article71339666.ece"
+          }
+        ],
+        "no_strong_insight": false,
+        "confidence": "medium"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": false,
+        "ungrounded_claims": [
+          "인플루언서 스타일의 AI 광고가 특정 지역(인도)에서 반발을 이끌어내는 것",
+          "인도 지역의 반발이 특정 인플루언서 스타일의 AI 광고에 집중된다는 점"
+        ],
+        "insight_quality": 35,
+        "reasoning": "분류는 정확하나, 모델의 인사이트가 기사에 명시되지 않은 '인플루언서 스타일 광고'와 '반발의 원인' 간의 인과관계를 지어냄. 기사는 반발의 구체적 이유를 제시하지 않는데, 모델은 이를 마치 사실인 듯 해석함. 정답의 인사이트는 프라이버시/문화 감수성 결여를 추정했으나, 모델은 근거 없이 다른 방향의 해석을 제시함."
+      }
+    },
+    {
+      "idx": 2,
+      "title": "Anthropic says it will add invisible AI watermark to show when you use Claude, but it is okay",
+      "gold": {
+        "facts": [
+          "Anthropic이 Claude가 생성한 텍스트에 보이지 않는 워터마크를 추가해 AI 관여 여부를 식별할 수 있게 한다고 발표했다.",
+          "이는 규정 준수 목적의 조치로 소개됐다."
+        ],
+        "insights": [
+          {
+            "claim": "AI 생성 콘텐츠 식별 기능을 선제적으로 도입하는 것은, 향후 AI 콘텐츠 표시 의무화 규제에 대비한 전략적 포지셔닝으로 해석될 수 있다.",
+            "type": "전략적_의도",
+            "evidence": [
+              "'규정 준수를 위한 조치'로 소개"
+            ],
+            "confidence": "medium",
+            "reasoning": "구체적으로 어떤 규제를 겨냥한 것인지 기사에 명시되지 않았다.",
+            "source_url": "https://www.indiatoday.in/technology/news/story/anthropic-says-it-will-add-invisible-ai-watermark-to-show-when-you-use-claude-but-it-is-okay-2972273-2026-08-16"
+          },
+          {
+            "claim": "경쟁 AI 기업들도 유사한 워터마킹 기능 도입 압력을 받을 수 있다.",
+            "type": "이해관계자_영향",
+            "evidence": [
+              "Anthropic의 선제적 워터마크 도입"
+            ],
+            "confidence": "low",
+            "reasoning": "경쟁사 반응 데이터가 없어 추론이다.",
+            "source_url": "https://www.indiatoday.in/technology/news/story/anthropic-says-it-will-add-invisible-ai-watermark-to-show-when-you-use-claude-but-it-is-okay-2972273-2026-08-16"
+          },
+          {
+            "claim": "워터마크 기술이 실제로 우회 불가능한지 여부가 이 조치의 실효성을 좌우하는 리스크 요인이다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "'보이지 않는' 워터마크 기술 채택"
+            ],
+            "confidence": "low",
+            "reasoning": "기술적 강건성에 대한 정보가 기사에 없다.",
+            "source_url": "https://www.indiatoday.in/technology/news/story/anthropic-says-it-will-add-invisible-ai-watermark-to-show-when-you-use-claude-but-it-is-okay-2972273-2026-08-16"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [],
+        "insights": []
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": true,
+        "ungrounded_claims": [],
+        "insight_quality": null,
+        "reasoning": "모델이 no_strong_insight=true로 판단(facts와 insights 모두 비움)하였고, 정답도 no_strong_insight=false이지만 모델이 insight를 제공하지 않았으므로 품질 평가 대상이 아닙니다. 다만 모델이 기사 제목·요약에서 추출 가능한 기본 사실(Anthropic의 워터마크 도입, EU AI Act 준수 목적)을 전혀 제시하지 않아 정보 추출 성능은 부족합니다."
+      }
+    },
+    {
+      "idx": 3,
+      "title": "Enterprises with AI context layers report agent failures at more than twice the rate of those without one",
+      "gold": {
+        "facts": [
+          "AI 컨텍스트 레이어를 도입한 기업의 에이전트 오류(확신에 찬 오답)율이 50%로, 도입하지 않은 기업(21%)보다 두 배 이상 높다는 조사 결과가 나왔다."
+        ],
+        "insights": [
+          {
+            "claim": "컨텍스트 레이어 도입이 오히려 오류율을 높인다는 역설적 결과는, AI 에이전트 인프라 투자가 반드시 신뢰성 향상으로 이어지지 않는다는 것을 보여주는 중요한 반증 데이터다.",
+            "type": "모순_긴장",
+            "evidence": [
+              "도입 기업 50% vs 미도입 기업 21% 오류율"
+            ],
+            "confidence": "high",
+            "reasoning": "구체적 수치가 명시돼 있어 확신도가 높지만, 조사 방법론(표본 크기, 정의 등)은 확인할 수 없다.",
+            "source_url": "https://venturebeat.com/data/enterprises-with-ai-context-layers-report-agent-failures-at-more-than-twice-the-rate-of-those-without-one"
+          },
+          {
+            "claim": "이 데이터가 맞다면, 기업들은 컨텍스트 레이어를 '더 많이' 도입하기보다 '어떻게' 설계하는지에 대한 검증 단계를 먼저 거쳐야 한다는 시사점이 있다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "오류율 역전 현상"
+            ],
+            "confidence": "medium",
+            "reasoning": "원인 분석(설계 결함 vs 측정 방식 차이 등)이 기사에 없어 처방까지 확신하긴 이르다.",
+            "source_url": "https://venturebeat.com/data/enterprises-with-ai-context-layers-report-agent-failures-at-more-than-twice-the-rate-of-those-without-one"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [
+          "AI 컨텍스트 레이어 사용 기업의 오류 빈도가 비용 레이어 사용 기업 대비 두 배 이상(50% vs 21%)이라고 VB Pulse 데이터에 나타났다."
+        ],
+        "insights": [
+          "이런 데이터가 공개되면 AI 컨텍스트 레이어가 특정 업무 유형에만 적용되는지 테스트로 사용될 수 있다."
+        ],
+        "confidence": "medium",
+        "facts_with_evidence": [
+          "'VB Pulse 데이터'에 나타난 오류 빈도(50% vs 21%) 차이"
+        ],
+        "insights_with_facts": [
+          "AI 오류 빈도 차이는 AI 컨텍스트 레이어가 특정 업무 유형에만 적용되는지 테스트로 사용될 수 있다."
+        ],
+        "type": "market_research"
+      },
+      "judge": {
+        "classification_match": false,
+        "grounded": false,
+        "ungrounded_claims": [
+          "비용 레이어(cost layer) 사용 기업 대비"
+        ],
+        "insight_quality": 25,
+        "reasoning": "모델이 '비용 레이어'라는 기사에 없는 개념을 삽입했고(오류), insight도 기사 내용과 관련 없는 억지 해석('특정 업무 유형 테스트')을 제시했습니다. 정답의 통찰(인프라 투자가 신뢰성으로 이어지지 않는다는 역설)과 방향이 전혀 다릅니다."
+      }
+    },
+    {
+      "idx": 4,
+      "title": "[AI MY 뉴스] 뉴욕 반도체주 프리뷰...美 금리·유가 급등에 반도체주 약세",
+      "gold": {
+        "facts": [
+          "미국 장기 금리와 유가 급등 여파로 뉴욕증시에서 반도체주가 약세를 보였다.",
+          "엔비디아·마이크론 등 시가총액 비중이 큰 AI·반도체 관련주의 낙폭이 나스닥 지수(-1.2%) 하락을 주도했다."
+        ],
+        "insights": [
+          {
+            "claim": "AI·반도체 대형주의 시가총액 비중이 커서 이들 종목의 등락이 지수 전체 방향을 좌우하는 구조가 됐다는 것은, 지수 자체가 AI 테마에 대한 베팅과 다름없어졌다는 신호다.",
+            "type": "시장_신호",
+            "evidence": [
+              "엔비디아·마이크론 낙폭이 지수 하락 주도"
+            ],
+            "confidence": "high",
+            "reasoning": "지수 하락의 원인이 특정 종목군 낙폭이라는 점이 두 기사 모두에서 명시적으로 확인된다.",
+            "source_url": "https://www.newspim.com/news/view/20260818001291"
+          },
+          {
+            "claim": "AI 관련주가 실적이 아닌 금리·유가 같은 거시 변수에도 민감하게 반응하는 것은, 이 종목군의 밸류에이션이 높아 거시 충격에 대한 하방 완충 여력이 작다는 리스크를 보여준다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "금리·유가 급등이 반도체주 약세의 직접 원인으로 지목"
+            ],
+            "confidence": "medium",
+            "reasoning": "단 하루의 시장 반응이라 지속적 패턴인지는 추가 관측이 필요하다.",
+            "source_url": "https://www.newspim.com/news/view/20260818001291"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [
+          "AI주가 뉴욕증시 하락 출발, 나스닥 1.2% 하락, 채권금리 상승 부담으로 AI주 약세가 시작됐다."
+        ],
+        "insights": [
+          {
+            "claim": "AI주가 금리 상승 부담으로 하락 출발한 것은, AI주가 전체 시장(반도체·AI)에 걸쳐 금리 리스크를 동시에 겪고 있다는 신호다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "AI주 약세(1.2%)·채권금리 상승 부담"
+            ],
+            "confidence": "medium",
+            "reasoning": "AI주 전체 시장에 걸쳐 금리 리스크를 동시에 겪고 있다는 점이 구체적이다.",
+            "source_url": "https://www.thefairnews.co.kr/news/articleView.html?idxno=85408"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": false,
+        "ungrounded_claims": [
+          "AI주 약세(1.2%)·채권금리 상승 부담",
+          "AI주가 전체 시장(반도체·AI)에 걸쳐 금리 리스크를 동시에 겪고 있다는 신호"
+        ],
+        "insight_quality": 35,
+        "reasoning": "모델이 no_strong_insight=false로 분류한 것은 정답과 일치하나, 제시된 insight가 기사 제목·요약에 충분히 근거하지 않습니다. '1.2%'는 나스닥 지수 낙폭이지 AI주 약세 폭이 아니며, '전체 시장에 걸쳐 동시에'라는 표현은 원문에서 확인 불가능합니다. 정답의 '밸류에이션 리스크' 통찰과 달리 모델의 통찰은 단순한 시장 반응 재술에 그쳤습니다."
+      }
+    },
+    {
+      "idx": 5,
+      "title": "엔비디아, 오픈AI에 149조원 금융 보증",
+      "gold": {
+        "facts": [
+          "엔비디아가 오픈AI에 149조원 규모의 금융 보증을 제공했으며, 이 자금이 다시 엔비디아 GPU 구매로 순환된다는 지적이 있다."
+        ],
+        "insights": [
+          {
+            "claim": "공급자가 고객에게 자금을 대는 순환 투자 구조는 AI 인프라 시장의 수요가 실질적 수익보다 공급자 주도 자금 순환에 의존하고 있다는 리스크 신호다.",
+            "type": "모순_긴장",
+            "evidence": [
+              "엔비디아 투자→오픈AI 매출→엔비디아 GPU 구매 순환 지적"
+            ],
+            "confidence": "high",
+            "reasoning": "이 순환출자 우려는 기사에 구체적으로 명시된 지적이라 확신도가 높음",
+            "source_url": "https://www.chosun.com/economy/tech_it/2026/08/19/QE4R5JFEANBDDKRW3JV6755UW4/?utm_source=naver&utm_medium=referral&utm_campaign=naver-news"
+          },
+          {
+            "claim": "이 구조가 장기화되면 엔비디아의 실적이 실수요보다 자체 투자에 좌우되는 착시를 만들 수 있다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "149조원 규모 금융 보증"
+            ],
+            "confidence": "medium",
+            "reasoning": "실제 매출 기여 비중은 기사에 없음",
+            "source_url": "https://www.chosun.com/economy/tech_it/2026/08/19/QE4R5JFEANBDDKRW3JV6755UW4/?utm_source=naver&utm_medium=referral&utm_campaign=naver-news"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [
+          "엔비디아가 오픈AI에 149조원 금융 보증을 제공했으나, 이 금액이 엔비디아의 매출로 돌아올지에 대한 지적이 제기돼 왔다."
+        ],
+        "insights": [
+          {
+            "claim": "AI 투자 금액이 엔비디아 매출로 돌아올지에 대한 지적이 제기되는 것은, 투자금이 엔비디아의 매출로 돌아오지 않는다는 자체가 엔비디아의 매출에 영향을 줄 수 있다는 신호다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "투자 금액이 매출로 돌아올지에 대한 지적"
+            ],
+            "confidence": "medium",
+            "reasoning": "지적 자체가 실제 매출 영향을 보일지는 확인 불가",
+            "source_url": "https://www.chosun.com/economy/tech_it/2026/08/19/QE4R5JFEANBDDKRW3JV6755UW4/?utm_source=naver&utm_medium=referral&utm_campaign=naver-news"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": true,
+        "ungrounded_claims": [],
+        "insight_quality": 35,
+        "reasoning": "모델이 no_strong_insight=false를 정답과 동일하게 분류했으나, insight 자체가 순환 투자 구조의 실질적 리스크를 명확히 포착하지 못했습니다. 정답은 '공급자 주도 자금 순환에 대한 수요 의존도'라는 구체적 문제를 지적한 반면, 모델의 insight는 '지적이 있다는 것 자체가 리스크'라는 순환논리에 빠져 있어 분석 깊이가 현저히 낮습니다."
+      }
+    },
+    {
+      "idx": 6,
+      "title": "“데이터센터 전력 문제가 AI 경쟁서 핵심… 전력 인프라에 주목하라”",
+      "gold": {
+        "facts": [
+          "데이터센터 전력 확보가 AI 경쟁의 핵심 병목으로 지목되며, 전력 인프라 투자가 주목받고 있다."
+        ],
+        "insights": [
+          {
+            "claim": "전력 인프라가 반도체 공급 이슈보다 영향을 덜 받는 '별도의 AI 밸류체인'으로 부상하고 있다는 것은 투자 관점이 칩에서 인프라 전반으로 확대되고 있다는 신호다.",
+            "type": "시장_신호",
+            "evidence": [
+              "'반도체 노이즈 영향을 덜 받는 AI 밸류체인'으로 소개"
+            ],
+            "confidence": "medium",
+            "reasoning": "투자 전문가 개인 의견 기반",
+            "source_url": "https://www.kmib.co.kr/article/view.asp?arcid=9000004136&cp=nv"
+          },
+          {
+            "claim": "전력 병목이 지속되면 반도체 확보에 성공한 기업도 전력 제약으로 실제 가동률을 못 높일 위험이 있다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "전력이 핵심 병목으로 지목"
+            ],
+            "confidence": "medium",
+            "reasoning": "구체적 가동률 데이터는 없음",
+            "source_url": "https://www.kmib.co.kr/article/view.asp?arcid=9000004136&cp=nv"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": null,
+      "generation_error": "GenerationError('모델 출력이 JSON이 아님: \\'{\"facts\": [\"데이터센터 전력 문제가 AI 경쟁에서 핵심 병목으로 자리 잡고 있다는 전문가 분석다.\"], \"insights\": [{\"claim\": \"전력 인프라가 AI 경쟁에서 핵심 병목으로 부상했다는 것은, 전력이 AI 성능에 직접적으로 영향을 미치는 구체적 데이터가 입력된 요약이다.\", \"type\": \"fact\", \"evidence\": [\"전력 \\'')"
+    },
+    {
+      "idx": 7,
+      "title": "라운드힐, 수노·앤트로픽에 저작권 소송…500곡서 1만곡까지 확대 예고...",
+      "gold": {
+        "facts": [
+          "음악 퍼블리셔 라운드힐이 AI 스타트업 수노와 앤트로픽을 상대로 저작권 침해 소송을 제기했으며, 소송 대상을 500곡에서 1만곡까지 확대할 예정이다."
+        ],
+        "insights": [
+          {
+            "claim": "소송 대상을 20배로 확대할 계획이라는 것은 저작권자 측이 개별 합의보다 산업 전체를 겨냥한 선례를 만들려는 전략으로 볼 수 있다.",
+            "type": "전략적_의도",
+            "evidence": [
+              "500곡→1만곡 확대 예고"
+            ],
+            "confidence": "medium",
+            "reasoning": "확대 계획 자체는 명시, 실제 소송 결과는 미확인",
+            "source_url": "https://www.wikitree.co.kr/articles/1153224"
+          },
+          {
+            "claim": "AI 생성 콘텐츠 저작권 소송이 누적되면 AI 기업들의 학습 데이터 확보 비용·리스크가 구조적으로 높아질 수 있다.",
+            "type": "리스크_기회",
+            "evidence": [
+              "AI 기업 대상 저작권 소송 확대 추세"
+            ],
+            "confidence": "low",
+            "reasoning": "산업 전체 비용 영향은 추론",
+            "source_url": "https://www.wikitree.co.kr/articles/1153224"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "model_output": {
+        "facts": [
+          "라운드힐이 수노·앤트로픽에 저작권 침해 소송을 제기했다. 소송은 500곡에서 1만곡까지 확대 예고됐다."
+        ],
+        "insights": [
+          {
+            "claim": "음악 퍼블리셔가 AI 스타트업을 상대로 저작권 소송을 제기한 것은, AI 음악 생성 도구가 음악 저작물에 대한 저작권 보호를 받지 못하는 문제가 현실화된 신호다.",
+            "type": "시장_신호",
+            "evidence": [
+              "음악 퍼블리셔가 AI 스타트업을 상대로 저작권 소송을 제기한 사건"
+            ],
+            "confidence": "medium",
+            "reasoning": "소송 범위가 500곡에서 1만곡까지 확대될 경우, AI 음악 도구가 실제 음악 저작물에까지 침투한 사례로, 업계 전체에 영향을 미칠 수 있다.",
+            "source_url": "https://www.wikitree.co.kr/articles/1153224"
+          }
+        ],
+        "no_strong_insight": false
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": true,
+        "ungrounded_claims": [],
+        "insight_quality": 45,
+        "reasoning": "모델의 insight는 기사 내용에 근거하지만, 정답의 '전략적 의도'(산업 전체 선례 만들기)나 '리스크 기회'(AI 기업 비용 증가)와 달리 단순히 '문제 현실화'라는 표면적 해석에 그쳤다. 소송 확대의 의미에 대한 깊이가 부족하다."
+      }
+    },
+    {
+      "idx": 8,
+      "title": "\"Je t'ai respecté et tu m'as pris pour un con\", un détenu de 21 ans condamné à dix mois de prison pour insultes et dégradations en cellule",
+      "gold": {
+        "facts": [
+          "타르브 법원은 21세 수감자에게 재사회화 상담사에 대한 모욕과 감방 기물파손 혐의로 금고 10개월형을 선고했다.",
+          "이 수감자는 이전에도 수감 이력이 있다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": {
+        "facts": [
+          "프랑스에서 21세 미성년 남성이 10개월 실형을 받은 형사 재범 사례다."
+        ],
+        "insights": [],
+        "confidence": "low",
+        "reasoning": "형사 재범 사례에 대한 일반적 소개적 기사다. 구체적 재범 사유나 사회적 영향 등은 기사에 없어 인사이트가 제한된다.",
+        "source_url": "https://www.nrpyrenees.fr/2026/08/16/je-t'ai-respecte-et-tu-mas-pris-pour-un-con-un-detenu-de-21-ans-condamne-a-dix-mois-de-prison-pour-insultes-et-degradations-en-cellule-13507927.php"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": false,
+        "ungrounded_claims": [
+          "프랑스에서 21세 미성년 남성이 10개월 실형을 받은 형사 재범 사례다."
+        ],
+        "insight_quality": null,
+        "reasoning": "분류는 맞으나(no_strong_insight=true), 모델의 사실 진술에 문제가 있습니다. 기사 제목에서 명시된 구체적 혐의(모욕, 감방 기물파손)를 누락하고 '형사 재범 사례'로 일반화했으며, 수감자의 나이를 '미성년'이라고 기술한 점도 부정확합니다(21세는 성인). 정답의 구체적 팩트들이 기사에 근거하는데, 모델은 이를 제대로 추출하지 못했습니다."
+      }
+    },
+    {
+      "idx": 9,
+      "title": "arrivi sospesi fino alle 8",
+      "gold": {
+        "facts": [
+          "에트나 화산 활동으로 인한 화산재 때문에 카타니아 공항 도착편이 다음날 오전 8시까지 중단됐다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": {
+        "facts": [
+          "이탈리아 카타니아 항공공항이 오전 8시까지 항공편이 중단됐다."
+        ],
+        "insights": [],
+        "confidence": "low",
+        "reasoning": "재난 상황이지만 구체적 피해 규모나 대응 조치는 입력에 없어 인사이트가 불가능하다.",
+        "source_url": "https://www.affaritaliani.it/cronache/etna-ancora-cenere-sullaeroporto-di-catania-sospesi-gli-arrivi-fino-alle-8-di-domani.html"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": false,
+        "ungrounded_claims": [
+          "이탈리아 카타니아 항공공항이 오전 8시까지 항공편이 중단됐다."
+        ],
+        "insight_quality": null,
+        "reasoning": "모델이 정답과 동일하게 no_strong_insight=true로 분류한 점은 일치하나, facts에서 정답은 '에트나 화산 활동으로 인한 화산재'라는 구체적 원인을 명시했으나 모델의 팩트는 원인을 누락했고 '도착편(arrivals) 중단'이라는 세부사항도 빠졌다. 제목·요약만으로는 화산재 원인을 직접 확인할 수 없어 ungrounded로 판단."
+      }
+    },
+    {
+      "idx": 10,
+      "title": "Honor's Robot Phone is finally up for grabs, and it may be the most ambitious camera phone yet",
+      "gold": {
+        "facts": [
+          "Honor가 200MP 카메라와 AI 피사체 추적 기능을 탑재한 'Robot Phone'을 출시했다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": {
+        "facts": [
+          "Honor의 자율형 스마트폰이 공개됐고, 가장 흥미로운 카메라 스마트폰이 될 수 있다는 소개다."
+        ],
+        "insights": [],
+        "confidence": "low",
+        "reasoning": "구체적 기능·가격·시장 반응 등 구체적 데이터가 입력에 없어 인사이트가 불가능하다.",
+        "source_url": "https://www.digitaltrends.com/phones/honors-new-robot-phone-may-be-the-most-ambitious-camera-phone-yet/"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": true,
+        "ungrounded_claims": [],
+        "insight_quality": null,
+        "reasoning": "모델이 no_strong_insight=true로 정답과 일치하게 분류했습니다. 제시된 제목·요약만으로는 구체적 사양이나 시장 영향을 단정하기 어렵다는 판단이 타당합니다. 모델의 fact는 기사 제목에 근거하며, insight를 내지 않은 선택도 적절합니다."
+      }
+    },
+    {
+      "idx": 11,
+      "title": "Chinese AI Startup DeepSeek Launches V4 Pro AI Model To Take On OpenA And Anthropic",
+      "gold": {
+        "facts": [
+          "DeepSeek가 OpenAI·Anthropic에 맞서기 위해 V4 Pro 모델을 출시했다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": {
+        "facts": [
+          "중국 AI 스타트업 DeepSeek이 오픈AI와 Anthropic과 경쟁을 위해 V4 Pro 프로모션을 발표했다."
+        ],
+        "insights": [],
+        "confidence": "low",
+        "reasoning": "경쟁 제품 정보가 제시되나 구체적 경쟁 데이터(비용, 성능, 매출 등)는 입력에 없어 인과관계나 위험/기회 판단이 어렵다.",
+        "source_url": "https://www.timesnownews.com/technology-science/chinese-ai-startup-deepseek-launches-v4-pro-ai-model-to-take-on-opena-and-anthropic-article-155607831"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": true,
+        "ungrounded_claims": [],
+        "insight_quality": null,
+        "reasoning": "모델이 정답과 동일하게 no_strong_insight=true로 분류했고, 추출한 fact도 기사 제목·요약에 실제로 근거합니다. 정답도 no_strong_insight=true이므로 insight_quality는 평가 대상이 아닙니다."
+      }
+    },
+    {
+      "idx": 12,
+      "title": "3 of our stocks surged in the AI trade came back. 3 others stumbled",
+      "gold": {
+        "facts": [
+          "CNBC 투자 클럽이 지난 회의 이후 상승한 종목 3개와 하락한 종목 3개를 정리한 포트폴리오 리뷰 기사다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": {
+        "facts": [
+          "AI 관련 투자에서 3주간 3개 주가 상승했으나, 다른 3개 주가 다운 trend을 보였다."
+        ],
+        "insights": [],
+        "confidence": "low",
+        "reasoning": "구체적 주종이나 투자 전략적 판단이 기사에 명시되지 않아 인사이트로 확대하기 어렵다.",
+        "source_url": "https://www.cnbc.com/2026/08/13/3-of-our-stocks-surged-in-the-ai-trade-came-back-3-others-stumbled.html"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": false,
+        "ungrounded_claims": [
+          "AI 관련 투자에서 3주간 3개 주가 상승했으나, 다른 3개 주가 다운 trend을 보였다."
+        ],
+        "insight_quality": null,
+        "reasoning": "classification_match는 맞으나, facts에서 '3주간'이라는 시간 범위가 기사에 명시되지 않았고, '다운 trend'라는 표현이 원문의 'stumbled'보다 과해석되었습니다."
+      }
+    },
+    {
+      "idx": 13,
+      "title": "From SQL Scripts to AI Pipelines: How a Technology Innovator Transformed Mortgage Servicing From the Inside",
+      "gold": {
+        "facts": [
+          "한 기술 기업이 SQL 스크립트에서 AI 파이프라인으로 전환한 사례를 소개하는 글이다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": {
+        "facts": [
+          "AI 기술이 기존 SQL 스크립트로 작성된 부동산 서비스 업무를 전환하는 과정에서, 조직이 신뢰할 수 있는 시스템으로 전환하는 과제를 다루고 있다는 주장을 담은 기술 블로그다."
+        ],
+        "insights": [],
+        "confidence": "low",
+        "reasoning": "구체적 기업 사례나 구체적 성공 사례(신뢰도 향상, 속도 향상 등)는 입력에 없어 인사이트가 명확하지 않음",
+        "source_url": "https://techbullion.com/from-sql-scripts-to-ai-pipelines-how-a-technology-innovator-transformed-mortgage-servicing-from-the-inside/"
+      },
+      "judge": {
+        "classification_match": true,
+        "grounded": true,
+        "ungrounded_claims": [],
+        "insight_quality": null,
+        "reasoning": "모델이 no_strong_insight=true로 정답과 일치하게 분류했습니다. 제시된 제목과 요약만으로는 구체적인 기술 성과나 비즈니스 임팩트를 파악할 수 없어 정당한 판단입니다. 모델의 fact 표현이 정답보다 길지만, 기사 제목과 요약에 근거하고 있습니다."
+      }
+    },
+    {
+      "idx": 14,
+      "title": "US to tell partners they must pick sides in AI race with China",
+      "gold": {
+        "facts": [
+          "미국이 동맹국들에게 AI 경쟁에서 중국과 미국 중 편을 택하라고 요구할 것이라는 보도다."
+        ],
+        "insights": [],
+        "no_strong_insight": true
+      },
+      "model_output": null,
+      "generation_error": "GenerationError('모델 출력이 JSON이 아님: \\'{\"facts\": [\"미국이 파트너국가들에게 AI 경쟁에서 중국과 측면을 선택해야 한다고 경고했다.\", \"이런 조치는 중국이 미국의 AI 연구 자금을 제한하려는 전략으로 보여지고 있다.\"], \"insights\": [{\"claim\": \"국제적 AI 협력에서 각국이 자국의 경쟁력을 보호하려는 정책적 선택을 보여주는 사례다.\", \"type\": \"정책_의도\", \"\\'')"
+    }
+  ]
+}

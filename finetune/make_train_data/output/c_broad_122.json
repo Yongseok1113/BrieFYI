@@ -1,0 +1,24 @@
+{
+  "cluster_id": "c_broad_122",
+  "window_type": "broad",
+  "no_strong_insight_hint": false,
+  "entities": [],
+  "event_type": null,
+  "articles": [
+    {
+      "title": "'모두의 AI' 잡아라…SKT·KT·카카오 등 6파전(종합)",
+      "description": "있는 AI 서비스를 만들고자 한다\"고 포부를 전했다. 이스트소프트는 \"확정된 컨소시엄 외에도 커머스와 여행 등 버티컬 분야 스타트업을 파트너로 추가 합류시켜 서비스 2차 확산에 유리한 구조를 갖출 계획\"이라고...",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 10:41:00+00:00",
+      "url": "https://www.yna.co.kr/view/AKR20260818165900017?input=1195m"
+    },
+    {
+      "title": "정부 '모두의 AI' 사업 본격화…SKT·KT·카카오 등 6곳 출사표",
+      "description": "있는 AI 서비스를 만들고자 한다\"고 포부를 전했다. 이스트소프트는 확정된 컨소시엄 외에도 커머스와 여행 등 버티컬 분야 스타트업을 파트너로 추가 합류시켜 서비스 2차 확산에 유리한 구조를 갖춘다는 계획이다....",
+      "source": "네이버뉴스",
+      "published_at": "2026-08-18 13:05:00+00:00",
+      "url": "https://www.bloter.net/news/articleView.html?idxno=671212"
+    }
+  ],
+  "claude_prompt": "다음 기사 묶음이 정말 같은 사건/테마를 다루는지 먼저 확인해줘. 다루지 않는다면 어떻게 나눠야 하는지 알려줘. 같은 사건/테마가 맞다면, facts/insights(전략적_의도|모순_긴장|선행지표|이해관계자_영향|시장_신호|리스크_기회 중 최소 2종 이상 시도, 억지로 6종 다 채우지 않음)/no_strong_insight를 판단해서 아래 스키마로 답해줘.\n\n{\"facts\": [\"...\"], \"insights\": [{\"claim\": \"...\", \"type\": \"...\", \"evidence\": [\"...\"], \"confidence\": \"high|medium|low\", \"reasoning\": \"...\"}], \"no_strong_insight\": false}\n\n추가로 이 클러스터에 대해 종합적 판단을 요구하는 테스트용 질문과 모범 답안도 하나 만들어줘."
+}

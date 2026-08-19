@@ -1,7 +1,7 @@
 # 스모크 테스트용 초소형 설정. GPU/실제 API 키가 없어도 파이프라인이 끝까지
 # 도는지 몇 분 안에 확인하는 용도 (design doc 6.4절).
 #   python -m summarize_ft.train --config finetune/configs/smoke.yaml
-base_model: Qwen/Qwen3-0.6B-Instruct   # 스모크 테스트 전용 초소형 모델, 실제 학습에는 쓰지 않음
+base_model: Qwen/Qwen3-0.6B   # 스모크 테스트 전용 초소형 모델, 실제 학습에는 쓰지 않음
 task: summarize
 quantization: none
 lora:
