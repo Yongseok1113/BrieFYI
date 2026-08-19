@@ -26,6 +26,7 @@ from . import subscribers as subscriber_db
 VALID_CATEGORIES = {"경제", "기술", "금융", "산업", "스포츠", "정치"}
 
 RESEND_URL = "https://api.resend.com/emails"
+SITE_URL = "https://briefyi.netlify.app/"
 
 
 @asynccontextmanager
@@ -47,7 +48,6 @@ app.add_middleware(
 def send_welcome_email(to_email: str, categories: list[str]) -> None:
     """
     신규 구독자에게 환영 메일을 보낸다.
-    categories는 이 시점에 항상 1개 이상 있다 (subscribe()에서 이미 검증됨).
     """
 
     if not config.RESEND_API_KEY or not config.EMAIL_FROM:
@@ -62,12 +62,19 @@ def send_welcome_email(to_email: str, categories: list[str]) -> None:
             headers={"Authorization": f"Bearer {config.RESEND_API_KEY}"},
             json={
                 "from": config.EMAIL_FROM,
-                "to": [to_email],
-                "subject": "BrieFYI 구독이 시작됐어요",
+                "to": [config.EMAIL_TO],
+                "subject": "BrieFYI 구독을 환영합니다! 🎉 첫 소식을 기다려주세요.",
                 "html": (
-                    "<p>안녕하세요, BrieFYI 구독 신청이 완료됐어요.</p>"
-                    f"<p>관심 분야: <b>{categories_text}</b></p>"
-                    "<p>앞으로 관련 소식을 브리핑으로 보내드릴게요.</p>"
+                    "<p>안녕하세요, BrieFYI 구독자님!</p>"
+                    "<p>BrieFYI 뉴스레터를 구독해 주셔서 진심으로 감사합니다."
+                    "앞으로 BrieFYI에서는 매일 아침마다 관심 분야에 대한"
+                    " 알차고 유익한 뉴스를 전해드릴게요.</p>"
+                    "<p>📌 앞으로 이런 내용을 보내드려요!</p>"
+                    f"<p>관심분야 : <b>{categories_text}</b></p>"
+                    f'<p>👉 <a href="{SITE_URL}">{SITE_URL}</a></p>'
+                    "<p>혹시 메일이 보이지 않고 스팸함에 들어있다면,"
+                    f" {config.EMAIL_FROM}을 주소록에 추가해 주세요!</p>"
+                    "<p>감사합니다.<br>BrieFYI 드림</p>"
                 ),
             },
             timeout=15,
